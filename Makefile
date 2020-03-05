@@ -1,17 +1,17 @@
-phony: build
+.PHONY: build
 build: target/debug/clplog
 
-phony: release
+.PHONY: release
 release: target/release/clplog
 
-phony: target/release/clplog
+.PHONY: target/release/clplog
 target/release/clplog:
 	cargo build --release
 
-phony: target/debug/clplog
+.PHONY: target/debug/clplog
 target/debug/clplog:
 	cargo build
 
-phony: clean
+.PHONY: clean
 clean:
 	rm -rf target
