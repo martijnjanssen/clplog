@@ -90,14 +90,14 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
-                let msg_sanitized_1 = &re_base_16.replace_all(msg, "some-base-16-hash");
+                let msg_sanitized = &re_base_16.replace_all(msg, "some-base-16-hash");
                 // replace alpha numerical ids of length 52 (e.g.: nHBe4vqSAzjpPRLKwSFzRFtmvzXaf5wPPmuVrQCAoJoS1zskgDA4)
-                let msg_sanitized_2 = &re_alpha_num_id.replace_all(msg_sanitized_1, "some-id");
+                let msg_sanitized = &re_alpha_num_id.replace_all(msg_sanitized, "some-id");
                 // replace ip addresses
-                let msg_sanitized_3 = &re_ip.replace_all(msg_sanitized_2, "some-ip");
+                let msg_sanitized = &re_ip.replace_all(msg_sanitized, "some-ip");
                 // replace numbers with '#' prefix (e.g.: #5334)
                 let msg_sanitized = re_hash_num
-                    .replace_all(msg_sanitized_3, "#some-num")
+                    .replace_all(msg_sanitized, "#some-num")
                     .to_string();
 
                 if match_counter % 10000 == 0 {
