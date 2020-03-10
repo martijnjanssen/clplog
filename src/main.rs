@@ -100,12 +100,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     .replace_all(msg_sanitized, "#some-num")
                     .to_string();
 
-                if match_counter % 10000 == 0 {
-                    println!("has done {} lines", match_counter);
-                    println!("{}", msg_sanitized);
-                    // dbg!(all_log_sequence.clone());
-                }
-
                 // if this is a new log
                 if !log_id_map.contains_key(&msg_sanitized) {
                     let msg_sanitized_clone_1 = msg_sanitized.clone();
@@ -161,13 +155,17 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // dbg!(all_log_sequence);
     // dbg!(log_list);
 
+    println!("{} {}", all_log_sequence.len(), log_list.len());
     for (pos, item) in all_log_sequence.iter().enumerate() {
-        println!("{} {}", pos, item.len());
+        print!("1 {}", item.len());
+        for log_id in item.iter() {
+            print!(" {}", log_id)
+        }
+        println!()
     }
-    println!("{}", log_list.len());
 
-    println!("total number of matches: {}", match_counter);
-    println!("total number of non-matches: {}", no_match_counter);
+    // println!("total number of matches: {}", match_counter);
+    // println!("total number of non-matches: {}", no_match_counter);
 
     Ok(())
 }
