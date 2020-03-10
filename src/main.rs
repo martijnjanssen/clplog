@@ -1,13 +1,10 @@
-use regex::Captures;
 use regex::Regex;
 use std::boxed::Box;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
-use std::io::{BufReader, BufWriter};
-use std::iter::Enumerate;
+use std::io::BufReader;
 use std::process;
 use std::result::Result;
 
@@ -61,19 +58,30 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_ip = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
     let re_hash_num = Regex::new(r"#\d+").unwrap();
 
+    let mut started = false;
+
     while let Some(line) = contents.next() {
         let l = line.expect("end of file");
         let capture_res = re.captures(l.as_str());
         match capture_res {
             Some(mtch) => {
                 match_counter += 1;
-                let msg = mtch.get(1).expect("error while matching logline").as_str();
+
+                let msg = match mtch.get(1) {
+                    Some(m) => m.as_str(),
+                    None => {
+                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
+                            "unable to get match from parsed log",
+                        ))
+                    }
+                };
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
-                    all_log_sequence.push(Vec::<u64>::new());
+                    all_log_sequence.push(Vec::new());
+                    started = true;
                 }
 
-                if all_log_sequence.len() == 0 {
+                if !started {
                     continue;
                 }
 
@@ -123,22 +131,25 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 // increase the count
-                let count = log_counts
-                    .get_mut(*log_id as usize)
-                    .expect("should have counter entry");
-                *count += 1;
-
-                // append the id to the current sequence
-                let sequence_id = all_log_sequence.len() - 1;
-                let sequence = match all_log_sequence.get_mut(sequence_id) {
-                    Some(seq) => seq,
+                match log_counts.get_mut(*log_id as usize) {
+                    Some(count) => *count += 1,
                     None => {
                         return Err(Box::<dyn std::error::Error + Send + Sync>::from(
-                            "should have entry for current sequence",
+                            "should have count for entry",
                         ));
                     }
-                };
-                sequence.push(*log_id);
+                }
+
+                // append the id to the current sequence, if none found, add a new one
+                let log_index = all_log_sequence.len() - 1;
+                match all_log_sequence.get_mut(log_index) {
+                    Some(sequence) => sequence.push(*log_id),
+                    None => {
+                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
+                            "should have entry in log sequence",
+                        ));
+                    }
+                }
             }
             None => {
                 no_match_counter += 1;
