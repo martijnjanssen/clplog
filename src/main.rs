@@ -1,3 +1,4 @@
+use regex::Match;
 use regex::Regex;
 use std::boxed::Box;
 use std::collections::HashMap;
@@ -51,7 +52,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // let re = Regex::new(r"\d{4}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Oct|Sep|Nov|Dec)-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{9}\s(\w+):(.+)").unwrap();
 
     // Shorter regex separating on spaces in the log line, first match is the entire line, 1 is the origin, 2 is the level, 3 is the message
-    let re = Regex::new(r".{11}\s.{18}\s(\w+:\w+\s.+)").unwrap();
+    let re = Regex::new(r".{11}\s.{18}\s((\w+):(\w+\s.+))").unwrap();
 
     let re_base_16 = Regex::new(r"[0-9A-F]{64}").unwrap();
     let re_alpha_num_id = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
@@ -66,6 +67,10 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         match capture_res {
             Some(mtch) => {
                 match_counter += 1;
+
+                if !match_line(mtch.get(2).unwrap()) {
+                    continue;
+                }
 
                 let msg = match mtch.get(1) {
                     Some(m) => m.as_str(),
@@ -170,40 +175,47 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// fn match_line(mtch: Captures) -> String {
-//     // Match on all log categories
-//     let res = match mtch.get(1).unwrap().as_str() {
-//         "NetworkOPs" => mtch.get(3).unwrap().as_str(),
-//         "LedgerConsensus" => mtch.get(3).unwrap().as_str(),
-//         "LedgerMaster" => mtch.get(3).unwrap().as_str(),
-//         "Protocol" => mtch.get(3).unwrap().as_str(),
-//         "Peer" => mtch.get(3).unwrap().as_str(),
-//         "Application" => mtch.get(3).unwrap().as_str(),
-//         "LoadManager" => mtch.get(3).unwrap().as_str(),
-//         "LoadMonitor" => mtch.get(3).unwrap().as_str(),
-//         "PeerFinder" => mtch.get(3).unwrap().as_str(),
-//         "ManifestCache" => mtch.get(3).unwrap().as_str(),
-//         "Server" => mtch.get(3).unwrap().as_str(),
-//         "Validations" => mtch.get(3).unwrap().as_str(),
-//         "Resource" => mtch.get(3).unwrap().as_str(),
-//         "Ledger" => mtch.get(3).unwrap().as_str(),
-//         "JobQueue" => mtch.get(3).unwrap().as_str(),
-//         "NodeStore" => mtch.get(3).unwrap().as_str(),
-//         "TaggedCache" => mtch.get(3).unwrap().as_str(),
-//         "Amendments" => mtch.get(3).unwrap().as_str(),
-//         "OrderBookDB" => mtch.get(3).unwrap().as_str(),
-//         "ValidatorList" => mtch.get(3).unwrap().as_str(),
-//         "ValidatorSite" => mtch.get(3).unwrap().as_str(),
-//         "Flow" => mtch.get(3).unwrap().as_str(),
-//         "TimeKeeper" => mtch.get(3).unwrap().as_str(),
-//         "InboundLedger" => mtch.get(3).unwrap().as_str(),
-//         "TransactionAcquire" => mtch.get(3).unwrap().as_str(),
-//         "LedgerHistory" => mtch.get(3).unwrap().as_str(),
-//         unknown => {
-//             eprintln!("encountered unknown event \"{}\"", unknown);
-//             "unknown log"
-//         }
-//     };
+fn match_line(mtch: Match) -> bool {
+    // Match on all log categories
+    let res = match mtch.as_str() {
+        "NetworkOPs" => false,
+        "LedgerConsensus" => true,
+        "LedgerMaster" => false,
+        "Protocol" => false,
+        "Peer" => false,
+        "Application" => false,
+        "LoadManager" => false,
+        "LoadMonitor" => false,
+        "PeerFinder" => false,
+        "ManifestCache" => false,
+        "Server" => false,
+        "Validations" => false,
+        "Resource" => false,
+        "Ledger" => false,
+        "JobQueue" => false,
+        "NodeStore" => false,
+        "TaggedCache" => false,
+        "Amendments" => false,
+        "OrderBookDB" => false,
+        "ValidatorList" => false,
+        "ValidatorSite" => false,
+        "Flow" => false,
+        "TimeKeeper" => false,
+        "InboundLedger" => false,
+        "TransactionAcquire" => false,
+        "LedgerHistory" => false,
+        "OpenLedger" => false,
+        "PathRequest" => false,
+        "TxQ" => false,
+        "Resolver" => false,
+        "Overlay" => false,
+        "LedgerCleaner" => false,
+        unknown => {
+            eprintln!("encountered unknown event \"{}\"", unknown);
+            "unknown log";
+            false
+        }
+    };
 
-//     return String::from(res);
-// }
+    return res;
+}
