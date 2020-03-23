@@ -64,6 +64,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_alpha_num_id = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
     let re_ip = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
     let re_hash_num = Regex::new(r"#\d+").unwrap();
+    let re_ledger_close_time = Regex::new(r"\d{9}").unwrap();
 
     let mut started = false;
 
@@ -111,8 +112,10 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 // replace ip addresses
                 let msg_sanitized = &re_ip.replace_all(msg_sanitized, "some-ip");
                 // replace numbers with '#' prefix (e.g.: #5334)
-                let msg_sanitized = re_hash_num
-                    .replace_all(msg_sanitized, "#some-num")
+                let msg_sanitized = &re_hash_num.replace_all(msg_sanitized, "#some-num");
+                // replace ledger close times
+                let msg_sanitized = re_ledger_close_time
+                    .replace_all(msg_sanitized, "some-ledger-close-time")
                     .to_string();
 
                 // if this is a new log
