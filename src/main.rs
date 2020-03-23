@@ -88,10 +88,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
-                    if consensus_seq_counter == 10 {
-                        break;
-                    }
-
                     all_log_sequence.push(Vec::new());
                     started = true;
                     rounds += 1;
@@ -174,11 +170,21 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // dbg!(all_log_sequence);
     // dbg!(log_list);
 
+    let mut prev: &u64 = &u64::max_value();
+    let mut pprev: &u64 = &u64::max_value();
+
     println!("{} {}", all_log_sequence.len(), log_list.len());
     for (pos, item) in all_log_sequence.iter().enumerate() {
         print!("1 {}", item.len());
         for log_id in item.iter() {
-            print!(" {}", log_id)
+            // If the previous 2 printed items are identical, don't print the result
+            if log_id == prev && log_id == pprev {
+            } else {
+                print!(" {}", log_id)
+            }
+            // Shift the two previous values
+            pprev = prev;
+            prev = log_id;
         }
         println!()
     }
