@@ -10,6 +10,10 @@ use std::process;
 use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
+// Stop after number rounds
+static STOP_ROUNDS: i32 = 10;
+// Process entire file
+// static STOP_ROUNDS: i32 = -1;
 
 fn main() {
     if let Err(error) = try_main() {
@@ -40,10 +44,10 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mut match_counter = 0;
     let mut no_match_counter = 0;
 
+    let mut rounds = 0;
+
     // Count distinct logs
     let mut log_id_counter = 0;
-    // Count distinct sequences
-    let mut consensus_seq_counter = 0;
     // Map log_string -> log_id
     let mut log_id_map: HashMap<String, u64> = HashMap::new();
     let mut all_log_sequence = Vec::<Vec<u64>>::new();
@@ -90,7 +94,10 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 
                     all_log_sequence.push(Vec::new());
                     started = true;
-                    consensus_seq_counter += 1;
+                    rounds += 1;
+                    if rounds == STOP_ROUNDS && STOP_ROUNDS != -1 {
+                        break;
+                    }
                 }
 
                 if !started {
