@@ -42,6 +42,8 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Count distinct logs
     let mut log_id_counter = 0;
+    // Count distinct sequences
+    let mut consensus_seq_counter = 0;
     // Map log_string -> log_id
     let mut log_id_map: HashMap<String, u64> = HashMap::new();
     let mut all_log_sequence = Vec::<Vec<u64>>::new();
@@ -82,8 +84,13 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
+                    if consensus_seq_counter == 10 {
+                        break;
+                    }
+
                     all_log_sequence.push(Vec::new());
                     started = true;
+                    consensus_seq_counter += 1;
                 }
 
                 if !started {
