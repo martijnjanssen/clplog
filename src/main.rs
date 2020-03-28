@@ -6,6 +6,7 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::io::BufWriter;
 use std::process;
 use std::result::Result;
 
@@ -172,20 +173,24 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mut prev: &u64 = &u64::max_value();
     let mut pprev: &u64 = &u64::max_value();
 
-    println!("{} {}", all_log_sequence.len(), log_list.len());
-    for (pos, item) in all_log_sequence.iter().enumerate() {
-        print!("1 {}", item.len());
+    let out_filename = filename.to_owned() + ".parsed";
+    let out_file = File::create(out_filename)?;
+    let mut out_file = BufWriter::new(out_file);
+
+    writeln!(out_file, "{} {}", all_log_sequence.len(), log_list.len())?;
+    for item in all_log_sequence.iter() {
+        write!(out_file, "1 {}", item.len())?;
         for log_id in item.iter() {
             // If the previous 2 printed items are identical, don't print the result
             if log_id == prev && log_id == pprev {
             } else {
-                print!(" {}/0", log_id)
+                write!(out_file, " {}/0", log_id)?
             }
             // Shift the two previous values
             pprev = prev;
             prev = log_id;
         }
-        println!()
+        writeln!(out_file)?
     }
 
     // println!("total number of matches: {}", match_counter);
