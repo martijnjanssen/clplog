@@ -64,7 +64,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_alpha_num_id = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
     let re_ip = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
     let re_hash_num = Regex::new(r"#\d+").unwrap();
-    let re_ledger_close_time = Regex::new(r"\d{9}").unwrap();
+    let re_ledger_close_time = Regex::new(r"(?:[^\d])\d{9}(?:[^\d]|$)").unwrap();
 
     let mut started = false;
 
