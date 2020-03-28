@@ -101,10 +101,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                if msg.starts_with("Application:NFO") || msg.starts_with("Peer:") {
-                    continue;
-                }
-
                 // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
                 let msg_sanitized = &re_base_16.replace_all(msg, "some-base-16-hash");
                 // replace alpha numerical ids of length 52 (e.g.: nHBe4vqSAzjpPRLKwSFzRFtmvzXaf5wPPmuVrQCAoJoS1zskgDA4)
