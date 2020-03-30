@@ -219,7 +219,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
             // If the previous 2 printed items are identical, don't print the result
             if log_id == prev && log_id == pprev {
             } else {
-                write!(out_file, " {}", log_id)?
+                write!(parsed_file, " {}", log_id)?
             }
             // Shift the two previous values
             pprev = prev;
