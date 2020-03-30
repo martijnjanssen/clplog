@@ -12,9 +12,9 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static STOP_ROUNDS: i32 = 100;
+// static STOP_ROUNDS: i32 = 1000000;
 // Process entire file
-// static STOP_ROUNDS: i32 = -1;
+static STOP_ROUNDS: i32 = -1;
 
 fn main() {
     if let Err(error) = try_main() {
@@ -72,12 +72,18 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_participants = Regex::new(r"\d{1,3} participants").unwrap();
     let re_ledger_id = Regex::new(r": \d+ <=").unwrap();
     let re_ledger_id_trail = Regex::new(r"<= \d+").unwrap();
+    let re_advance_ledger_id = Regex::new(r"\d+ with >= \d+").unwrap();
     let re_ledger_json_log = Regex::new(r"\{.+close_time_human.+\}").unwrap();
     let re_proposers = Regex::new(r"Proposers:\d{1,3}").unwrap();
     let re_thresh_weight = Regex::new(r"nw:\d{1,3}").unwrap();
     let re_thresh_vote = Regex::new(r"thrV:\d{1,3}").unwrap();
     let re_thresh_consensus = Regex::new(r"thrC:\d{1,3}").unwrap();
     let re_offset_estimate = Regex::new(r"is estimated at -?\d \(\d{1,3}\)").unwrap();
+    let re_num_nodes = Regex::new(r"\d+ nodes").unwrap();
+    let re_brackets_num = Regex::new(r"\[\d+\]").unwrap();
+    let re_seq_num = Regex::new(r"seq=\d+").unwrap();
+    let re_ledger_timeouts = Regex::new(r"\d+ timeouts for ledger \d+").unwrap();
+    let re_missing_node = Regex::new(r"Missing node in \d+").unwrap();
 
     let mut started = false;
 
@@ -134,6 +140,8 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     &re_ledger_id.replace_all(msg_sanitized, ": #some-ledger-id <=");
                 let msg_sanitized =
                     &re_ledger_id_trail.replace_all(msg_sanitized, "<= #some-ledger-id");
+                let msg_sanitized = &re_advance_ledger_id
+                    .replace_all(msg_sanitized, "#some-ledger-id >= #validations");
                 let msg_sanitized =
                     &re_ledger_json_log.replace_all(msg_sanitized, "LEDGER_STATUS_JSON_LOG");
                 let msg_sanitized =
@@ -147,6 +155,13 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     msg_sanitized,
                     "is estimated at #some-offset (#some-closecount)",
                 );
+                let msg_sanitized = &re_num_nodes.replace_all(msg_sanitized, "#num nodes");
+                let msg_sanitized = &re_brackets_num.replace_all(msg_sanitized, "");
+                let msg_sanitized = &re_seq_num.replace_all(msg_sanitized, "seq=#");
+                let msg_sanitized = &re_ledger_timeouts
+                    .replace_all(msg_sanitized, "# timeouts for ledger #some-ledger-id");
+                let msg_sanitized =
+                    &re_missing_node.replace_all(msg_sanitized, "Missing node in #some-ledger-id");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
@@ -330,38 +345,38 @@ fn map_log(log: &String) -> &str {
 fn match_line(mtch: Match) -> bool {
     // Match on all log categories
     let res = match mtch.as_str() {
-        "NetworkOPs" => false,
+        "NetworkOPs" => true,
         "LedgerConsensus" => true,
-        "LedgerMaster" => false,
-        "Protocol" => false,
+        "LedgerMaster" => true,
+        "Protocol" => true,
         "Peer" => false,
         "Application" => false,
-        "LoadManager" => false,
+        "LoadManager" => true,
         "LoadMonitor" => false,
         "PeerFinder" => false,
         "ManifestCache" => false,
         "Server" => false,
-        "Validations" => false,
+        "Validations" => true,
         "Resource" => false,
-        "Ledger" => false,
-        "JobQueue" => false,
-        "NodeStore" => false,
-        "TaggedCache" => false,
-        "Amendments" => false,
-        "OrderBookDB" => false,
-        "ValidatorList" => false,
+        "Ledger" => true,
+        "JobQueue" => true,
+        "NodeStore" => true,
+        "TaggedCache" => true,
+        "Amendments" => true,
+        "OrderBookDB" => true,
+        "ValidatorList" => true,
         "ValidatorSite" => false,
         "Flow" => false,
-        "TimeKeeper" => false,
-        "InboundLedger" => false,
-        "TransactionAcquire" => false,
-        "LedgerHistory" => false,
-        "OpenLedger" => false,
-        "PathRequest" => false,
-        "TxQ" => false,
-        "Resolver" => false,
-        "Overlay" => false,
-        "LedgerCleaner" => false,
+        "TimeKeeper" => true,
+        "InboundLedger" => true,
+        "TransactionAcquire" => true,
+        "LedgerHistory" => true,
+        "OpenLedger" => true,
+        "PathRequest" => true,
+        "TxQ" => true,
+        "Resolver" => true,
+        "Overlay" => true,
+        "LedgerCleaner" => true,
         unknown => {
             eprintln!("encountered unknown event \"{}\"", unknown);
             "unknown log";
