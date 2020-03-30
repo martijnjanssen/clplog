@@ -12,7 +12,7 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static STOP_ROUNDS: i32 = 10;
+static STOP_ROUNDS: i32 = 100;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
 
@@ -127,7 +127,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
                 let msg_sanitized = &re_weight.replace_all(msg_sanitized, "#some-weight");
                 let msg_sanitized = &re_percent.replace_all(msg_sanitized, "#some-percent");
-                let msg_sanitized = &re_votes.replace_all(msg_sanitized, "#some-votes");
+                let msg_sanitized = &re_votes.replace_all(msg_sanitized, "#some-votes time votes");
                 let msg_sanitized =
                     &re_participants.replace_all(msg_sanitized, "#some-participants");
                 let msg_sanitized =
@@ -212,20 +212,38 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let parsed_file = File::create(parsed_filename)?;
     let mut parsed_file = BufWriter::new(parsed_file);
 
+    let labeled_filename = filename.to_owned() + ".labeled";
+    let labeled_file = File::create(labeled_filename)?;
+    let mut labeled_file = BufWriter::new(labeled_file);
+
     writeln!(parsed_file, "{} {}", all_log_sequence.len(), log_list.len())?;
+    writeln!(
+        labeled_file,
+        "{} {}",
+        all_log_sequence.len(),
+        log_list.len()
+    )?;
     for item in all_log_sequence.iter() {
         write!(parsed_file, "1 {}", item.len())?;
+        write!(labeled_file, "1 {}", item.len())?;
+
         for log_id in item.iter() {
             // If the previous 2 printed items are identical, don't print the result
             if log_id == prev && log_id == pprev {
             } else {
-                write!(parsed_file, " {}", log_id)?
+                write!(parsed_file, " {}", log_id)?;
+                write!(
+                    labeled_file,
+                    " {}",
+                    map_log(log_list.get(*log_id as usize).unwrap())
+                )?;
             }
             // Shift the two previous values
             pprev = prev;
             prev = log_id;
         }
-        writeln!(parsed_file)?
+        writeln!(parsed_file)?;
+        writeln!(labeled_file)?;
     }
 
     let mapping_filename = filename.to_owned() + ".mapping";
@@ -247,6 +265,66 @@ fn write_mapping(out_file: File, log_list: Vec<String>) -> Result<(), Box<dyn st
     }
 
     Ok(())
+}
+
+fn map_log(log: &String) -> &str {
+    match log
+        .as_str()
+        .get("LedgerConsensus:NFO ".len() as usize..log.len())
+        .unwrap()
+    {
+        "Entering consensus process, watching, synced=no" => "enterConsensusWatch",
+        "Entering consensus process, validating, synced=no" => "enterConsensusValidating",
+        "View of consensus changed during open status=open,  mode=wrongLedger" => {
+            "viewChangeOpenToWrongLedger"
+        }
+        "View of consensus changed during open status=open,  mode=proposing" => {
+            "viewChangeOpenToProposing"
+        }
+
+        "Consensus mode change before=observing, after=switchedLedger" => {
+            "modeObservingToSwitchedLedger"
+        }
+        "Consensus mode change before=switchedLedger, after=proposing" => {
+            "modeSwitchedLedgerToProposing"
+        }
+        "Consensus mode change before=proposing, after=observing" => "modeProposingToObserving",
+        "Consensus mode change before=observing, after=wrongLedger" => "modeObservingToWrongLedger",
+        "Consensus mode change before=observing, after=observing" => "modeObservingToObserving",
+        "Consensus mode change before=wrongLedger, after=proposing" => "modeWrongledgerToProposing",
+        "Consensus mode change before=proposing, after=proposing" => "modeProposingToProposing",
+        "Consensus mode change before=wrongLedger, after=wrongLedger" => {
+            "modeWrongledgerToWrongledger"
+        }
+
+        "Converge cutoff (#some-participants)" => "convergeCutoff",
+        "CNF buildLCL #some-base-16-hash" => "buildLCL",
+        "We closed at#some-ledger-close-time" => "ClosedAt",
+        "Our close offset is estimated at #some-offset (#some-closecount)" => "closeOffset",
+        "Need consensus ledger #some-base-16-hash" => "needConsensus",
+        "Entering consensus with: #some-base-16-hash" => "enterConsensus",
+        "Correct LCL is: #some-base-16-hash" => "correctLCL",
+        "LEDGER_STATUS_JSON_LOG" => "jsonStatus",
+        "#some-base-16-hash to #some-base-16-hash" => "hashTohash",
+        "Entering consensus process, validating, synced=yes" => "enterConsensus",
+        "CNF Val #some-base-16-hash" => "cnfSomething",
+        "Proposers:#some-proposers #some-needweight #some-thresh-vote #some-thresh-consensus" => {
+            "proposersWeightThresholdLog"
+        }
+        "No change (NO) : #some-weight, #some-percent" => "noChangeNo",
+        "No change (YES) : #some-weight, #some-percent" => "noChangeYes",
+        "Position change: CTime#some-ledger-close-time tx #some-base-16-hash" => "positionChange",
+        "#some-votes time votes for#some-ledger-close-time" => "votesForClosetime",
+        "By the time we got #some-base-16-hash no peers were proposing it" => "noPeersHashPropose",
+        "Consensus built old ledger: #some-ledger-id <= #some-ledger-id" => "buildOldLedger",
+        "Bowing out of consensus" => "consensusBowOut",
+        "Have the consensus ledger #some-base-16-hash" => "haveConsensusLedger",
+        "We have TX consensus but not CT consensus" => "haveTXNotCTConsensus",
+        _ => {
+            println!("{}", log);
+            "unknownLog"
+        }
+    }
 }
 
 fn match_line(mtch: Match) -> bool {
