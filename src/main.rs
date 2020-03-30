@@ -285,7 +285,7 @@ fn write_mapping(out_file: File, log_list: Vec<String>) -> Result<(), Box<dyn st
 fn map_log(log: &String) -> &str {
     match log
         .as_str()
-        .get("LedgerConsensus:NFO ".len() as usize..log.len())
+        .get(log.find(" ").unwrap() + 1 as usize..log.len())
         .unwrap()
     {
         "Entering consensus process, watching, synced=no" => "enterConsensusWatch",
@@ -335,6 +335,48 @@ fn map_log(log: &String) -> &str {
         "Bowing out of consensus" => "consensusBowOut",
         "Have the consensus ledger #some-base-16-hash" => "haveConsensusLedger",
         "We have TX consensus but not CT consensus" => "haveTXNotCTConsensus",
+        "Advancing accepted ledger to #some-ledger-id >= #validations validations" => {
+            "advancingLedger"
+        }
+        "Consensus time for #some-num with LCL #some-base-16-hash" => "consensusTimeWithLCL",
+        "Transaction is obsolete" => "transactionObsolete",
+        " GetLedger: Route TX set failed" => "routeTXSetFailed",
+        "Not relaying trusted proposal" => "notRelayProposal",
+        " Got request for #num nodes at depth 3, return #num nodes" => "gotRequest3Nodes",
+        " Got request for #num nodes at depth 2, return #num nodes" => "gotRequest2Nodes",
+        " Got request for #num nodes at depth 1, return #num nodes" => "gotRequest1Nodes",
+        " Got request for #num nodes at depth 0, return #num nodes" => "gotRequest0Nodes",
+        " Duplicate manifest #some-num" => "duplicateManifest",
+        " Untrusted manifest #some-num" => "untristedManifest",
+        "Want: #some-base-16-hash" => "wantHash",
+        "# timeouts for ledger #some-ledger-id" => "timeoutForLedgerID",
+        "Unable to determine hash of ancestor seq=# from ledger hash=#some-base-16-hash seq=#" => {
+            "unableHashLedgerAncestor"
+        }
+        " Ledger/TXset data with no nodes" => "ledger/TXNoNodes",
+
+        "STATE->full" => "stateFull",
+        "STATE->tracking" => "stateTracking",
+        "STATE->syncing" => "stateSyncing",
+        "STATE->connected" => "stateConnected",
+
+        "Net LCL #some-base-16-hash" => "netLCL",
+        "Our LCL: " => "ourLCL",
+
+        "Built fetch pack with #num nodes" => "builtFetchPack",
+        " Bad manifest #some-num: stale" => "badManifestStale",
+        " Unable to route TX/ledger data reply" => "unableRouteTX/LedgerReply",
+        "Initiating consensus engine" => "initiateConsensusEngine",
+        "Node count (2) is sufficient." => "nodeCountSufficient",
+        "We are not running on the consensus ledger" => "notOnConsensusLedger",
+        "time jump" => "timeJump",
+
+        " getNodeFat( NodeID(3,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
+        " getNodeFat( NodeID(5,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
+        "Missing node in #some-ledger-id" => "missingNodeInLedgerID",
+        "Missing node in #some-base-16-hash" => "missingNodeInHash",
+        "TimeKeeper: Close time offset now -1" => "closeTimeOffset",
+
         _ => {
             println!("{}", log);
             "unknownLog"
