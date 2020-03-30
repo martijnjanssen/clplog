@@ -208,13 +208,13 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mut prev: &u64 = &u64::max_value();
     let mut pprev: &u64 = &u64::max_value();
 
-    let out_filename = filename.to_owned() + ".parsed";
-    let out_file = File::create(out_filename)?;
-    let mut out_file = BufWriter::new(out_file);
+    let parsed_filename = filename.to_owned() + ".parsed";
+    let parsed_file = File::create(parsed_filename)?;
+    let mut parsed_file = BufWriter::new(parsed_file);
 
-    writeln!(out_file, "{} {}", all_log_sequence.len(), log_list.len())?;
+    writeln!(parsed_file, "{} {}", all_log_sequence.len(), log_list.len())?;
     for item in all_log_sequence.iter() {
-        write!(out_file, "1 {}", item.len())?;
+        write!(parsed_file, "1 {}", item.len())?;
         for log_id in item.iter() {
             // If the previous 2 printed items are identical, don't print the result
             if log_id == prev && log_id == pprev {
@@ -225,11 +225,26 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
             pprev = prev;
             prev = log_id;
         }
-        writeln!(out_file)?
+        writeln!(parsed_file)?
     }
+
+    let mapping_filename = filename.to_owned() + ".mapping";
+    let mapping_file = File::create(mapping_filename)?;
+
+    write_mapping(mapping_file, log_list)?;
 
     // println!("total number of matches: {}", match_counter);
     // println!("total number of non-matches: {}", no_match_counter);
+
+    Ok(())
+}
+
+fn write_mapping(out_file: File, log_list: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    let mut out_file = BufWriter::new(out_file);
+
+    for (id, log) in log_list.iter().enumerate() {
+        writeln!(out_file, "{} {}", id, log)?;
+    }
 
     Ok(())
 }
