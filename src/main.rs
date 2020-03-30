@@ -66,6 +66,18 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_ip = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
     let re_hash_num = Regex::new(r"#\d+").unwrap();
     let re_ledger_close_time = Regex::new(r"(?:[^\d])\d{9}(?:[^\d]|$)").unwrap();
+    let re_weight = Regex::new(r"weight -?\d{1,2}").unwrap();
+    let re_percent = Regex::new(r"percent \d{1,3}").unwrap();
+    let re_votes = Regex::new(r"\d{1,3} time votes").unwrap();
+    let re_participants = Regex::new(r"\d{1,3} participants").unwrap();
+    let re_ledger_id = Regex::new(r": \d+ <=").unwrap();
+    let re_ledger_id_trail = Regex::new(r"<= \d+").unwrap();
+    let re_ledger_json_log = Regex::new(r"\{.+close_time_human.+\}").unwrap();
+    let re_proposers = Regex::new(r"Proposers:\d{1,3}").unwrap();
+    let re_thresh_weight = Regex::new(r"nw:\d{1,3}").unwrap();
+    let re_thresh_vote = Regex::new(r"thrV:\d{1,3}").unwrap();
+    let re_thresh_consensus = Regex::new(r"thrC:\d{1,3}").unwrap();
+    let re_offset_estimate = Regex::new(r"is estimated at -?\d \(\d{1,3}\)").unwrap();
 
     let mut started = false;
 
@@ -103,17 +115,40 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
-                let msg_sanitized = &re_base_16.replace_all(msg, "some-base-16-hash");
+                let msg_sanitized = &re_base_16.replace_all(msg, "#some-base-16-hash");
                 // replace alpha numerical ids of length 52 (e.g.: nHBe4vqSAzjpPRLKwSFzRFtmvzXaf5wPPmuVrQCAoJoS1zskgDA4)
-                let msg_sanitized = &re_alpha_num_id.replace_all(msg_sanitized, "some-id");
+                let msg_sanitized = &re_alpha_num_id.replace_all(msg_sanitized, "#some-id");
                 // replace ip addresses
-                let msg_sanitized = &re_ip.replace_all(msg_sanitized, "some-ip");
+                let msg_sanitized = &re_ip.replace_all(msg_sanitized, "#some-ip");
                 // replace numbers with '#' prefix (e.g.: #5334)
                 let msg_sanitized = &re_hash_num.replace_all(msg_sanitized, "#some-num");
                 // replace ledger close times
-                let msg_sanitized = re_ledger_close_time
-                    .replace_all(msg_sanitized, "some-ledger-close-time")
-                    .to_string();
+                let msg_sanitized =
+                    &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
+                let msg_sanitized = &re_weight.replace_all(msg_sanitized, "#some-weight");
+                let msg_sanitized = &re_percent.replace_all(msg_sanitized, "#some-percent");
+                let msg_sanitized = &re_votes.replace_all(msg_sanitized, "#some-votes");
+                let msg_sanitized =
+                    &re_participants.replace_all(msg_sanitized, "#some-participants");
+                let msg_sanitized =
+                    &re_ledger_id.replace_all(msg_sanitized, ": #some-ledger-id <=");
+                let msg_sanitized =
+                    &re_ledger_id_trail.replace_all(msg_sanitized, "<= #some-ledger-id");
+                let msg_sanitized =
+                    &re_ledger_json_log.replace_all(msg_sanitized, "LEDGER_STATUS_JSON_LOG");
+                let msg_sanitized =
+                    &re_proposers.replace_all(msg_sanitized, "Proposers:#some-proposers");
+                let msg_sanitized =
+                    &re_thresh_weight.replace_all(msg_sanitized, "#some-needweight");
+                let msg_sanitized = &re_thresh_vote.replace_all(msg_sanitized, "#some-thresh-vote");
+                let msg_sanitized =
+                    &re_thresh_consensus.replace_all(msg_sanitized, "#some-thresh-consensus");
+                let msg_sanitized = &re_offset_estimate.replace_all(
+                    msg_sanitized,
+                    "is estimated at #some-offset (#some-closecount)",
+                );
+
+                let msg_sanitized = msg_sanitized.to_string();
 
                 // if this is a new log
                 if !log_id_map.contains_key(&msg_sanitized) {
