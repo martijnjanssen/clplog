@@ -353,7 +353,7 @@ fn map_log(log: &String) -> &str {
         "Unable to determine hash of ancestor seq=# from ledger hash=#some-base-16-hash seq=#" => {
             "unableHashLedgerAncestor"
         }
-        " Ledger/TXset data with no nodes" => "ledger/TXNoNodes",
+        " Ledger/TXset data with no nodes" => "ledgerOrTXNoNodes",
 
         "STATE->full" => "stateFull",
         "STATE->tracking" => "stateTracking",
@@ -365,7 +365,7 @@ fn map_log(log: &String) -> &str {
 
         "Built fetch pack with #num nodes" => "builtFetchPack",
         " Bad manifest #some-num: stale" => "badManifestStale",
-        " Unable to route TX/ledger data reply" => "unableRouteTX/LedgerReply",
+        " Unable to route TX/ledger data reply" => "unableRouteTXOrLedgerReply",
         "Initiating consensus engine" => "initiateConsensusEngine",
         "Node count (2) is sufficient." => "nodeCountSufficient",
         "We are not running on the consensus ledger" => "notOnConsensusLedger",
