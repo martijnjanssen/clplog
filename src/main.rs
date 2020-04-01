@@ -239,24 +239,35 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         log_list.len()
     )?;
     for item in all_log_sequence.iter() {
-        write!(parsed_file, "1 {}", item.len())?;
-        write!(labeled_file, "1 {}", item.len())?;
+        let mut log_string: String = "".to_owned();
+        let mut labeled_log_string: String = "".to_owned();
 
+        // Build the string to log
         for log_id in item.iter() {
             // If the previous 2 printed items are identical, don't print the result
             if log_id == prev && log_id == pprev {
             } else {
-                write!(parsed_file, " {}", log_id)?;
-                write!(
-                    labeled_file,
-                    " {}",
-                    map_log(log_list.get(*log_id as usize).unwrap())
-                )?;
+                // Add the id's to the line
+                log_string.push_str(format!(" {}", log_id).as_str());
+                // Add the labels to the line
+                labeled_log_string.push_str(
+                    format!(" {}", map_log(log_list.get(*log_id as usize).unwrap())).as_str(),
+                );
             }
             // Shift the two previous values
             pprev = prev;
             prev = log_id;
         }
+
+        // Split the string on spaces and count the amount of entries
+        let len = log_string.trim().split(" ").collect::<Vec<&str>>().len();
+
+        // Write to all files
+        write!(parsed_file, "1 {}", len)?;
+        write!(parsed_file, "{}", log_string)?;
+        write!(labeled_file, "1 {}", len)?;
+        write!(labeled_file, "{}", labeled_log_string)?;
+
         writeln!(parsed_file)?;
         writeln!(labeled_file)?;
     }
