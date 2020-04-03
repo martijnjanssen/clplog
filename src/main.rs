@@ -12,9 +12,9 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-// static STOP_ROUNDS: i32 = 1000000;
-// Process entire file
 static STOP_ROUNDS: i32 = 10;
+// Process entire file
+// static STOP_ROUNDS: i32 = -1;
 
 fn main() {
     if let Err(error) = try_main() {
@@ -93,6 +93,15 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_some_trusted = Regex::new(r"\(\d+ trusted").unwrap();
     let re_some_added = Regex::new(r"\(\d+ added").unwrap();
     let re_some_removed = Regex::new(r"\(\d+ removed").unwrap();
+    let re_some_good_num = Regex::new(r"good:\d+").unwrap();
+    let re_some_dupe_num = Regex::new(r"dupe:\d+").unwrap();
+    let re_some_src = Regex::new(r"src=\d+").unwrap();
+    let re_some_from = Regex::new(r"from \d+").unwrap();
+    let re_some_n = Regex::new(r"n=\d+").unwrap();
+    let re_some_peer = Regex::new(r"Peer [0-9A-F]+ votes").unwrap();
+    let re_some_peer_now = Regex::new(r"Peer [0-9A-F]+ now").unwrap();
+    let re_some_peer_has = Regex::new(r"[0-9A-F]+ has").unwrap();
+    let re_some_peer_votes = Regex::new(r"votes \w+ on").unwrap();
 
     let mut started = false;
 
@@ -137,6 +146,14 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_ip.replace_all(msg_sanitized, "#some-ip");
                 // replace numbers with '#' prefix (e.g.: #5334)
                 let msg_sanitized = &re_hash_num.replace_all(msg_sanitized, "#some-num");
+                let msg_sanitized =
+                    &re_some_peer.replace_all(msg_sanitized, "Peer #some-peer-node votes");
+                let msg_sanitized =
+                    &re_some_peer_now.replace_all(msg_sanitized, "Peer #some-peer-node now");
+                let msg_sanitized =
+                    &re_some_peer_has.replace_all(msg_sanitized, "#some-peer-node has");
+                let msg_sanitized =
+                    &re_some_peer_votes.replace_all(msg_sanitized, "votes #some-vote on");
                 // replace ledger close times
                 let msg_sanitized =
                     &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
@@ -174,12 +191,20 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_some_tasks.replace_all(msg_sanitized, "#some-tasks tasks");
                 let msg_sanitized = &re_some_jobs.replace_all(msg_sanitized, "#some-jobs jobs");
                 let msg_sanitized = &re_some_items.replace_all(msg_sanitized, "#some-items items");
-                let msg_sanitized = &re_some_of_some.replace_all(msg_sanitized, "#some of #some listed");
+                let msg_sanitized =
+                    &re_some_of_some.replace_all(msg_sanitized, "#some of #some listed");
                 let msg_sanitized = &re_some_of.replace_all(msg_sanitized, "#some of");
                 let msg_sanitized = &re_some_some_id.replace_all(msg_sanitized, "#some:#some-id");
                 let msg_sanitized = &re_some_trusted.replace_all(msg_sanitized, "#some trusted");
                 let msg_sanitized = &re_some_added.replace_all(msg_sanitized, "#some added");
                 let msg_sanitized = &re_some_removed.replace_all(msg_sanitized, "#some removed");
+                let msg_sanitized =
+                    &re_some_good_num.replace_all(msg_sanitized, "good:#some-good-num");
+                let msg_sanitized =
+                    &re_some_dupe_num.replace_all(msg_sanitized, "dupe:#some-dupe-num");
+                let msg_sanitized = &re_some_src.replace_all(msg_sanitized, "src=#some-src-num");
+                let msg_sanitized = &re_some_from.replace_all(msg_sanitized, "from #some_number");
+                let msg_sanitized = &re_some_n.replace_all(msg_sanitized, "n=#some-num");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
@@ -316,6 +341,7 @@ fn map_log(log: &String) -> &str {
         .as_str()
         .get(log.find(" ").unwrap() + 1 as usize..log.len())
         .unwrap()
+        .trim()
     {
         "Entering consensus process, watching, synced=no" => "enterConsensusWatch",
         "Entering consensus process, validating, synced=no" => "enterConsensusValidating",
@@ -369,20 +395,20 @@ fn map_log(log: &String) -> &str {
         }
         "Consensus time for #some-num with LCL #some-base-16-hash" => "consensusTimeWithLCL",
         "Transaction is obsolete" => "transactionObsolete",
-        " GetLedger: Route TX set failed" => "routeTXSetFailed",
+        "GetLedger: Route TX set failed" => "routeTXSetFailed",
         "Not relaying trusted proposal" => "notRelayProposal",
-        " Got request for #num nodes at depth 3, return #num nodes" => "gotRequest3Nodes",
-        " Got request for #num nodes at depth 2, return #num nodes" => "gotRequest2Nodes",
-        " Got request for #num nodes at depth 1, return #num nodes" => "gotRequest1Nodes",
-        " Got request for #num nodes at depth 0, return #num nodes" => "gotRequest0Nodes",
-        " Duplicate manifest #some-num" => "duplicateManifest",
-        " Untrusted manifest #some-num" => "untristedManifest",
+        "Got request for #num nodes at depth 3, return #num nodes" => "gotRequest3Nodes",
+        "Got request for #num nodes at depth 2, return #num nodes" => "gotRequest2Nodes",
+        "Got request for #num nodes at depth 1, return #num nodes" => "gotRequest1Nodes",
+        "Got request for #num nodes at depth 0, return #num nodes" => "gotRequest0Nodes",
+        "Duplicate manifest #some-num" => "duplicateManifest",
+        "Untrusted manifest #some-num" => "untristedManifest",
         "Want: #some-base-16-hash" => "wantHash",
         "# timeouts for ledger #some-ledger-id" => "timeoutForLedgerID",
         "Unable to determine hash of ancestor seq=# from ledger hash=#some-base-16-hash seq=#" => {
             "unableHashLedgerAncestor"
         }
-        " Ledger/TXset data with no nodes" => "ledgerOrTXNoNodes",
+        "Ledger/TXset data with no nodes" => "ledgerOrTXNoNodes",
 
         "STATE->full" => "stateFull",
         "STATE->tracking" => "stateTracking",
@@ -390,21 +416,81 @@ fn map_log(log: &String) -> &str {
         "STATE->connected" => "stateConnected",
 
         "Net LCL #some-base-16-hash" => "netLCL",
-        "Our LCL: " => "ourLCL",
+        "Our LCL:" => "ourLCL",
+        "LCL is #some-base-16-hash" => "lclIs",
 
         "Built fetch pack with #num nodes" => "builtFetchPack",
-        " Bad manifest #some-num: stale" => "badManifestStale",
-        " Unable to route TX/ledger data reply" => "unableRouteTXOrLedgerReply",
+        "Bad manifest #some-num: stale" => "badManifestStale",
+        "Unable to route TX/ledger data reply" => "unableRouteTXOrLedgerReply",
         "Initiating consensus engine" => "initiateConsensusEngine",
         "Node count (2) is sufficient." => "nodeCountSufficient",
         "We are not running on the consensus ledger" => "notOnConsensusLedger",
         "time jump" => "timeJump",
 
-        " getNodeFat( NodeID(3,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
-        " getNodeFat( NodeID(5,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
+        "getNodeFat( NodeID(3,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
+        "getNodeFat( NodeID(5,#some-base-16-hash)) throws exception: AS node" => "getNodeFat",
         "Missing node in #some-ledger-id" => "missingNodeInLedgerID",
         "Missing node in #some-base-16-hash" => "missingNodeInHash",
         "TimeKeeper: Close time offset now -1" => "closeTimeOffset",
+        "Not relaying UNTRUSTED proposal" => "notReplayingUntrustedProposal",
+        "Ignoring incoming transaction: Need network ledger" => "ignoringIncomingNeedNetwork",
+        "Got proposal for #some-base-16-hash but we are on #some-base-16-hash" => {
+            "gotProposalButAreOn"
+        }
+        "normal consensus" => "normalConsensus",
+        "Ledger not found: WHERE LedgerHash = '#some-base-16-hash'" => "ledgerNotFound",
+        "Need validated ledger for preferred ledger analysis #some-base-16-hash" => {
+            "needValidatedLedger"
+        }
+        "No validated ledger" => "noValidatedLedger",
+        "Deferring InboundLedger timer due to load" => "deferringLedgerDueToLoad",
+        "GetLedger: Routing Tx set request" => "getLedgerRoutingTxSet",
+        "Starting" => "starting",
+        "Started" => "started",
+        "Initializing" => "initializing",
+
+        "Ledger AS node stats: good:#some-good-num" => "ledgerAsNodeStatsGood",
+        "Ledger AS node stats: dupe:#some-dupe-num" => "ledgerAsNodeStatsDupe",
+        "Ledger AS node stats: good:#some-good-num dupe:#some-dupe-num" => "ledgerAsNodeStatsGoodDupe",
+        "Val for #some-base-16-hash trusted/full from #some-id signing key #some-id current src=#some-src-num" => "valHashTrustedFullCurrent",
+        "recvValidation #some-base-16-hash from #some_number" => "recvValidation",
+        "Val for #some-base-16-hash from #some-id not added UNlisted" => "valHashNotAddedUNlisted",
+        "GetLedger: Can't provide map" => "getLedgerCantProvideMap",
+        "#some of #some listed validators eligible for inclusion in the trusted set" => "numValidatorsInclusionTrustset",
+        "Consensus built new ledger" => "consensusBuiltNewLedger",
+        "Built ledger #some-num: #some-base-16-hash" => "buildLedger",
+        "Building canonical tx set: #some-base-16-hash" => "buildingCanonicalTxSet",
+        "Report: Transaction Set = #some-base-16-hash, close#some-ledger-close-time" => "reportTransactionSetClose",
+        "GetLedger: Request routed" => "getLedgerRequestRouted",
+        "L: #some-base-16-hash n=#some-num" => "lHashNval",
+        "GetLedger: Large send queue" => "getLedgerLargeSendQueue",
+        "GetObject: Large send queue" => "getObjectLargeSendQueue",
+        "Transaction is now included in open ledger" => "transactionIncluded",
+        "Peer #some-peer-node votes votes NO on #some-base-16-hash" => "peerVotesNo",
+        "Ledger TX node stats: good:#some-good-num" => "ledgerTxNodeStatsGood",
+        "Got tx #some-base-16-hash" => "gotTxHash",
+        "Peer #some-peer-node now votes #some-vote on #some-base-16-hash" => "somePeerVote",
+        "Peer #some-peer-node votes #some-vote on #some-base-16-hash" => "peerVotesOn",
+        "#some-peer-node has #some-base-16-hash" => "peerHasHash",
+        "Tx: #some-base-16-hash" => "txHash",
+        "TXN #some-base-16-hash/retry" => "txnRetry",
+        "TXN #some-base-16-hash/final" => "txnFinal",
+        "Entering RippleCalc in payment: #some-base-16-hash" => "enteringRippleCalc",
+        "Transaction retry: Path could not send partial amount." => "retryCouldNotSendPartial",
+        "Transaction applied: Path could not send partial amount." => "appliedCouldNotSendPartial",
+        "Transaction applied: The transaction was applied. Only final in a validated ledger." => "appliedOnlyInFinal",
+        "Not relaying disputed tx #some-base-16-hash" => "noReplayDisputedTx",
+        "Don't have tx set for peer" => "noTxSetForPeer",
+        "Test applying disputed transaction that did not get in #some-base-16-hash" => "testApplyDisputed",
+        "createDisputes #some-base-16-hash to #some-base-16-hash" => "createDisputes",
+        "Consensus built ledger we already had" => "consensusBuiltLedgerWeHad",
+        "Transaction #some-base-16-hash is disputed" => "transactionIsDisputed",
+        "Acquired TX set #some-base-16-hash" => "acquiredTxSetHash",
+        "Consensus built ledger we were acquiring" => "consensusBuiltLedgerWeAcquired",
+        "" => "",
+        "" => "",
+        "" => "",
+        "" => "",
 
         _ => {
             println!("{}", log);
@@ -442,7 +528,7 @@ fn match_line(mtch: Match) -> bool {
         "InboundLedger" => true,
         "TransactionAcquire" => true,
         "LedgerHistory" => true,
-        "OpenLedger" => true,
+        "OpenLedger" => false,
         "PathRequest" => true,
         "TxQ" => true,
         "Resolver" => true,
