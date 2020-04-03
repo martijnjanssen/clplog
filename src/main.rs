@@ -14,7 +14,7 @@ static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus pr
 // Stop after number rounds
 // static STOP_ROUNDS: i32 = 1000000;
 // Process entire file
-static STOP_ROUNDS: i32 = -1;
+static STOP_ROUNDS: i32 = 10;
 
 fn main() {
     if let Err(error) = try_main() {
@@ -84,6 +84,15 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_seq_num = Regex::new(r"seq=\d+").unwrap();
     let re_ledger_timeouts = Regex::new(r"\d+ timeouts for ledger \d+").unwrap();
     let re_missing_node = Regex::new(r"Missing node in \d+").unwrap();
+    let re_some_tasks = Regex::new(r"\d+ tasks").unwrap();
+    let re_some_jobs = Regex::new(r"\d+ jobs").unwrap();
+    let re_some_items = Regex::new(r"\d+ items").unwrap();
+    let re_some_of_some = Regex::new(r"\d+  of \d+ listed").unwrap();
+    let re_some_of = Regex::new(r"\d+ of").unwrap();
+    let re_some_some_id = Regex::new(r"\(\d+:#some-id").unwrap();
+    let re_some_trusted = Regex::new(r"\(\d+ trusted").unwrap();
+    let re_some_added = Regex::new(r"\(\d+ added").unwrap();
+    let re_some_removed = Regex::new(r"\(\d+ removed").unwrap();
 
     let mut started = false;
 
@@ -162,6 +171,15 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     .replace_all(msg_sanitized, "# timeouts for ledger #some-ledger-id");
                 let msg_sanitized =
                     &re_missing_node.replace_all(msg_sanitized, "Missing node in #some-ledger-id");
+                let msg_sanitized = &re_some_tasks.replace_all(msg_sanitized, "#some-tasks tasks");
+                let msg_sanitized = &re_some_jobs.replace_all(msg_sanitized, "#some-jobs jobs");
+                let msg_sanitized = &re_some_items.replace_all(msg_sanitized, "#some-items items");
+                let msg_sanitized = &re_some_of_some.replace_all(msg_sanitized, "#some of #some listed");
+                let msg_sanitized = &re_some_of.replace_all(msg_sanitized, "#some of");
+                let msg_sanitized = &re_some_some_id.replace_all(msg_sanitized, "#some:#some-id");
+                let msg_sanitized = &re_some_trusted.replace_all(msg_sanitized, "#some trusted");
+                let msg_sanitized = &re_some_added.replace_all(msg_sanitized, "#some added");
+                let msg_sanitized = &re_some_removed.replace_all(msg_sanitized, "#some removed");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
