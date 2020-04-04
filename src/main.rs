@@ -12,7 +12,7 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static STOP_ROUNDS: i32 = 10;
+static STOP_ROUNDS: i32 = 100;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
 
@@ -89,10 +89,11 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_some_items = Regex::new(r"\d+ items").unwrap();
     let re_some_of_some = Regex::new(r"\d+  of \d+ listed").unwrap();
     let re_some_of = Regex::new(r"\d+ of").unwrap();
-    let re_some_some_id = Regex::new(r"\(\d+:#some-id").unwrap();
-    let re_some_trusted = Regex::new(r"\(\d+ trusted").unwrap();
-    let re_some_added = Regex::new(r"\(\d+ added").unwrap();
-    let re_some_removed = Regex::new(r"\(\d+ removed").unwrap();
+    let re_of_some_for = Regex::new(r"of \d+ for").unwrap();
+    let re_some_some_id = Regex::new(r"\d+:#some-id").unwrap();
+    let re_some_trusted = Regex::new(r"\d+ trusted").unwrap();
+    let re_some_added = Regex::new(r"\d+ added").unwrap();
+    let re_some_removed = Regex::new(r"\d+ removed").unwrap();
     let re_some_good_num = Regex::new(r"good:\d+").unwrap();
     let re_some_dupe_num = Regex::new(r"dupe:\d+").unwrap();
     let re_some_src = Regex::new(r"src=\d+").unwrap();
@@ -102,6 +103,37 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_some_peer_now = Regex::new(r"Peer [0-9A-F]+ now").unwrap();
     let re_some_peer_has = Regex::new(r"[0-9A-F]+ has").unwrap();
     let re_some_peer_votes = Regex::new(r"votes \w+ on").unwrap();
+    let re_some_transactions = Regex::new(r"\d+ transactions?").unwrap();
+    let re_some_changes = Regex::new(r"\d+ changes").unwrap();
+    let re_some_and = Regex::new(r"\d+ and").unwrap();
+    let re_some_begins = Regex::new(r"\d+ begins").unwrap();
+    let re_some_completed = Regex::new(r"\d+ completed").unwrap();
+    let re_some_accounts = Regex::new(r"\d+ accounts?").unwrap();
+    let re_is_some_nl = Regex::new(r"is \d+$").unwrap();
+    let re_to_some_nl = Regex::new(r"to \d+$").unwrap();
+    let re_hash_colon_some = Regex::new(r"#some-base-16-hash:\d+").unwrap();
+    let re_some_branch_support_object = Regex::new(r"\{.+branchSupport.+}").unwrap();
+    let re_agree_disagree = Regex::new(r"agree=\d+, disagree=\d+$").unwrap();
+    let re_some_consensus_dbg = Regex::new(r"\(working seq.+quorum: \d+\)").unwrap();
+    let re_report_some_prop = Regex::new(r"Prop=.+fail=[a-z]{2,3}$").unwrap();
+    let re_progress_some = Regex::new(r"progress\(\d+\)").unwrap();
+    let re_timeout_some = Regex::new(r"Timeout\(\d+\) pc=\d+ acquiring").unwrap();
+    let re_held_some = Regex::new(r"held: -*\d+$").unwrap();
+    let re_balance_some = Regex::new(r"Balance: \d+(\.\d+)?/[A-Z]{3}$").unwrap();
+    let re_offer_out = Regex::new(r"Offer out: \d+(\.\d+)?/[A-Z]{3}( \(issuer: [A-Za-z0-9]{33,34}\))?$").unwrap();
+    let re_offer_in_some_issuer = Regex::new(r"Offer in: \d+(\.\d+)?/[A-Z]{3}( \(issuer: [A-Za-z0-9]{33,34}\))?$").unwrap();
+    let re_crossing_as_some = Regex::new(r"Crossing as: [A-Za-z0-9]{33,34}$").unwrap();
+    let re_attempting_cross_one = Regex::new(r"Attempting cross: [A-Za-z0-9]{33,34}/[A-Z]{3} -> [A-Z]{3}$").unwrap();
+    let re_attempting_cross_two = Regex::new(r"Attempting cross: [A-Z]{3} -> [A-Za-z0-9]{33,34}/[A-Z]{3}$").unwrap();
+    let re_final_result = Regex::new(r"final result: [a-z]+$").unwrap();
+    let re_order_some_value = Regex::new(r"order \d+$").unwrap();
+    let re_has_some_some_required = Regex::new(r"has \d+, \d+ required$").unwrap();
+    let re_seq_some = Regex::new(r"seq \d+:?").unwrap();
+    let re_some_nays_object = Regex::new(r"\{.+nays.+}").unwrap();
+    let re_some_differences = Regex::new(r"\d+ differences").unwrap();
+    let re_success_some = Regex::new(r"success \d+").unwrap();
+    let re_some_processed = Regex::new(r"\d+ processed").unwrap();
+    let re_ledger_some = Regex::new(r"Ledger \d+").unwrap();
 
     let mut started = false;
 
@@ -194,6 +226,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized =
                     &re_some_of_some.replace_all(msg_sanitized, "#some of #some listed");
                 let msg_sanitized = &re_some_of.replace_all(msg_sanitized, "#some of");
+                let msg_sanitized = &re_of_some_for.replace_all(msg_sanitized, "of #some for");
                 let msg_sanitized = &re_some_some_id.replace_all(msg_sanitized, "#some:#some-id");
                 let msg_sanitized = &re_some_trusted.replace_all(msg_sanitized, "#some trusted");
                 let msg_sanitized = &re_some_added.replace_all(msg_sanitized, "#some added");
@@ -205,6 +238,37 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_some_src.replace_all(msg_sanitized, "src=#some-src-num");
                 let msg_sanitized = &re_some_from.replace_all(msg_sanitized, "from #some_number");
                 let msg_sanitized = &re_some_n.replace_all(msg_sanitized, "n=#some-num");
+                let msg_sanitized = &re_some_transactions.replace_all(msg_sanitized, "#some transactions");
+                let msg_sanitized = &re_some_changes.replace_all(msg_sanitized, "#some changes");
+                let msg_sanitized = &re_some_and.replace_all(msg_sanitized, "#some and");
+                let msg_sanitized = &re_some_begins.replace_all(msg_sanitized, "#some begins");
+                let msg_sanitized = &re_some_completed.replace_all(msg_sanitized, "#some completed");
+                let msg_sanitized = &re_some_accounts.replace_all(msg_sanitized, "#some accounts");
+                let msg_sanitized = &re_is_some_nl.replace_all(msg_sanitized, "is #some");
+                let msg_sanitized = &re_to_some_nl.replace_all(msg_sanitized, "to #some");
+                let msg_sanitized = &re_hash_colon_some.replace_all(msg_sanitized, "#some-base-16-hash:#some");
+                let msg_sanitized = &re_some_branch_support_object.replace_all(msg_sanitized, "#some-branch-support-object");
+                let msg_sanitized = &re_agree_disagree.replace_all(msg_sanitized, "agree=#some, disagree=#some");
+                let msg_sanitized = &re_some_consensus_dbg.replace_all(msg_sanitized, "(#truncated)");
+                let msg_sanitized = &re_report_some_prop.replace_all(msg_sanitized, "Prop=#some val=#some corLCL=#some fail=#some");
+                let msg_sanitized = &re_progress_some.replace_all(msg_sanitized, "progress(#some)");
+                let msg_sanitized = &re_timeout_some.replace_all(msg_sanitized, "Timeout(#some) pc=#some acquiring");
+                let msg_sanitized = &re_held_some.replace_all(msg_sanitized, "held: #some");
+                let msg_sanitized = &re_balance_some.replace_all(msg_sanitized, "Balance: #some-value/#currency");
+                let msg_sanitized = &re_offer_out.replace_all(msg_sanitized, "Offer out: #some-value/#currency");
+                let msg_sanitized = &re_offer_in_some_issuer.replace_all(msg_sanitized, "Offer in: #some-value/#currency");
+                let msg_sanitized = &re_crossing_as_some.replace_all(msg_sanitized, "Crossing as: #some-id");
+                let msg_sanitized = &re_attempting_cross_one.replace_all(msg_sanitized, "Attempting cross: #some-id/#currency -> #currency");
+                let msg_sanitized = &re_attempting_cross_two.replace_all(msg_sanitized, "Attempting cross: #currency -> #some-id/#currency");
+                let msg_sanitized = &re_final_result.replace_all(msg_sanitized, "final result: #some");
+                let msg_sanitized = &re_order_some_value.replace_all(msg_sanitized, "order #some-value");
+                let msg_sanitized = &re_has_some_some_required.replace_all(msg_sanitized, "has #some, #some required");
+                let msg_sanitized = &re_seq_some.replace_all(msg_sanitized, "seq #some:");
+                let msg_sanitized = &re_some_nays_object.replace_all(msg_sanitized, "{truncated}");
+                let msg_sanitized = &re_some_differences.replace_all(msg_sanitized, "#some differences");
+                let msg_sanitized = &re_success_some.replace_all(msg_sanitized, "success #some");
+                let msg_sanitized = &re_some_processed.replace_all(msg_sanitized, "#some processed");
+                let msg_sanitized = &re_ledger_some.replace_all(msg_sanitized, "Ledger #some");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
