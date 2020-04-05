@@ -147,6 +147,13 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_fetch_pack = Regex::new(r"pack for \d+").unwrap();
     let re_num_out_of = Regex::new(r"\d+ out of \d+").unwrap();
     let re_books_found = Regex::new(r"\d+ books found").unwrap();
+    let re_timeouts_some = Regex::new(r"timeouts:\d+").unwrap();
+    let re_status_other_than = Regex::new(r"Status other than -?\d+").unwrap();
+    let re_thresh_some = Regex::new(r"Thresh:\d+").unwrap();
+    let re_save_for = Regex::new(r"save for \d+").unwrap();
+    let re_ledger_obj = Regex::new(r"\{.+acquired.+}").unwrap();
+    let re_some_failed_and_some = Regex::new(r"\d+ failed and \d+").unwrap();
+    let re_node_count_some = Regex::new(r"Node count \(\d+\)").unwrap();
 
     let mut started = false;
 
@@ -317,6 +324,13 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_fetch_pack.replace_all(msg_sanitized, "pack for #some-obj");
                 let msg_sanitized = &re_num_out_of.replace_all(msg_sanitized, "#some out of #some");
                 let msg_sanitized = &re_books_found.replace_all(msg_sanitized, "#some books found");
+                let msg_sanitized = &re_timeouts_some.replace_all(msg_sanitized, "timeouts:#some");
+                let msg_sanitized = &re_status_other_than.replace_all(msg_sanitized, "Status other than #some");
+                let msg_sanitized = &re_thresh_some.replace_all(msg_sanitized, "Thresh:#some");
+                let msg_sanitized = &re_save_for.replace_all(msg_sanitized, "pack for #some");
+                let msg_sanitized = &re_ledger_obj.replace_all(msg_sanitized, "{truncated}");
+                let msg_sanitized = &re_some_failed_and_some.replace_all(msg_sanitized, "#some failed and #some");
+                let msg_sanitized = &re_node_count_some.replace_all(msg_sanitized, "Node count (#some)");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
