@@ -120,11 +120,19 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_timeout_some = Regex::new(r"Timeout\(\d+\) pc=\d+ acquiring").unwrap();
     let re_held_some = Regex::new(r"held: -*\d+$").unwrap();
     let re_balance_some = Regex::new(r"Balance: \d+(\.\d+)?/[A-Z]{3}$").unwrap();
-    let re_offer_out = Regex::new(r"Offer out: \d+(\.\d+)?/[A-Z]{3}( \(issuer: [A-Za-z0-9]{33,34}\))?$").unwrap();
-    let re_offer_in_some_issuer = Regex::new(r"Offer in: \d+(\.\d+)?/[A-Z]{3}( \(issuer: [A-Za-z0-9]{33,34}\))?$").unwrap();
-    let re_crossing_as_some = Regex::new(r"Crossing as: [A-Za-z0-9]{33,34}$").unwrap();
-    let re_attempting_cross_one = Regex::new(r"Attempting cross: [A-Za-z0-9]{33,34}/[A-Z]{3} -> [A-Z]{3}$").unwrap();
-    let re_attempting_cross_two = Regex::new(r"Attempting cross: [A-Z]{3} -> [A-Za-z0-9]{33,34}/[A-Z]{3}$").unwrap();
+    let re_offer_out =
+        Regex::new(r"Offer out: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$").unwrap();
+    let re_offer_in_some_issuer =
+        Regex::new(r"Offer in: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$").unwrap();
+    let re_crossing_as_some = Regex::new(r"Crossing as: r[A-Za-z0-9]{25,35}$").unwrap();
+    let re_attempting_cross_one =
+        Regex::new(r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> [A-Z]{3}$").unwrap();
+    let re_attempting_cross_two =
+        Regex::new(r"Attempting cross: [A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$").unwrap();
+    let re_attempting_cross_double = Regex::new(
+        r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$",
+    )
+    .unwrap();
     let re_final_result = Regex::new(r"final result: [a-z]+$").unwrap();
     let re_order_some_value = Regex::new(r"order \d+$").unwrap();
     let re_has_some_some_required = Regex::new(r"has \d+, \d+ required$").unwrap();
@@ -134,6 +142,11 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let re_success_some = Regex::new(r"success \d+").unwrap();
     let re_some_processed = Regex::new(r"\d+ processed").unwrap();
     let re_ledger_some = Regex::new(r"Ledger \d+").unwrap();
+    let re_account_some = Regex::new(r"r[a-zA-Z0-9]{25,35}").unwrap();
+    let re_done_complete = Regex::new(r"complete \d+").unwrap();
+    let re_fetch_pack = Regex::new(r"pack for \d+").unwrap();
+    let re_num_out_of = Regex::new(r"\d+ out of \d+").unwrap();
+    let re_books_found = Regex::new(r"\d+ books found").unwrap();
 
     let mut started = false;
 
@@ -186,9 +199,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     &re_some_peer_has.replace_all(msg_sanitized, "#some-peer-node has");
                 let msg_sanitized =
                     &re_some_peer_votes.replace_all(msg_sanitized, "votes #some-vote on");
-                // replace ledger close times
-                let msg_sanitized =
-                    &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
                 let msg_sanitized = &re_weight.replace_all(msg_sanitized, "#some-weight");
                 let msg_sanitized = &re_percent.replace_all(msg_sanitized, "#some-percent");
                 let msg_sanitized = &re_votes.replace_all(msg_sanitized, "#some-votes time votes");
@@ -238,37 +248,75 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_some_src.replace_all(msg_sanitized, "src=#some-src-num");
                 let msg_sanitized = &re_some_from.replace_all(msg_sanitized, "from #some_number");
                 let msg_sanitized = &re_some_n.replace_all(msg_sanitized, "n=#some-num");
-                let msg_sanitized = &re_some_transactions.replace_all(msg_sanitized, "#some transactions");
+                let msg_sanitized =
+                    &re_some_transactions.replace_all(msg_sanitized, "#some transactions");
                 let msg_sanitized = &re_some_changes.replace_all(msg_sanitized, "#some changes");
                 let msg_sanitized = &re_some_and.replace_all(msg_sanitized, "#some and");
                 let msg_sanitized = &re_some_begins.replace_all(msg_sanitized, "#some begins");
-                let msg_sanitized = &re_some_completed.replace_all(msg_sanitized, "#some completed");
+                let msg_sanitized =
+                    &re_some_completed.replace_all(msg_sanitized, "#some completed");
                 let msg_sanitized = &re_some_accounts.replace_all(msg_sanitized, "#some accounts");
                 let msg_sanitized = &re_is_some_nl.replace_all(msg_sanitized, "is #some");
                 let msg_sanitized = &re_to_some_nl.replace_all(msg_sanitized, "to #some");
-                let msg_sanitized = &re_hash_colon_some.replace_all(msg_sanitized, "#some-base-16-hash:#some");
-                let msg_sanitized = &re_some_branch_support_object.replace_all(msg_sanitized, "#some-branch-support-object");
-                let msg_sanitized = &re_agree_disagree.replace_all(msg_sanitized, "agree=#some, disagree=#some");
-                let msg_sanitized = &re_some_consensus_dbg.replace_all(msg_sanitized, "(#truncated)");
-                let msg_sanitized = &re_report_some_prop.replace_all(msg_sanitized, "Prop=#some val=#some corLCL=#some fail=#some");
+                let msg_sanitized =
+                    &re_hash_colon_some.replace_all(msg_sanitized, "#some-base-16-hash:#some");
+                let msg_sanitized = &re_some_branch_support_object
+                    .replace_all(msg_sanitized, "#some-branch-support-object");
+                let msg_sanitized =
+                    &re_agree_disagree.replace_all(msg_sanitized, "agree=#some, disagree=#some");
+                let msg_sanitized =
+                    &re_some_consensus_dbg.replace_all(msg_sanitized, "(#truncated)");
+                let msg_sanitized = &re_report_some_prop.replace_all(
+                    msg_sanitized,
+                    "Prop=#some val=#some corLCL=#some fail=#some",
+                );
                 let msg_sanitized = &re_progress_some.replace_all(msg_sanitized, "progress(#some)");
-                let msg_sanitized = &re_timeout_some.replace_all(msg_sanitized, "Timeout(#some) pc=#some acquiring");
+                let msg_sanitized = &re_timeout_some
+                    .replace_all(msg_sanitized, "Timeout(#some) pc=#some acquiring");
                 let msg_sanitized = &re_held_some.replace_all(msg_sanitized, "held: #some");
-                let msg_sanitized = &re_balance_some.replace_all(msg_sanitized, "Balance: #some-value/#currency");
-                let msg_sanitized = &re_offer_out.replace_all(msg_sanitized, "Offer out: #some-value/#currency");
-                let msg_sanitized = &re_offer_in_some_issuer.replace_all(msg_sanitized, "Offer in: #some-value/#currency");
-                let msg_sanitized = &re_crossing_as_some.replace_all(msg_sanitized, "Crossing as: #some-id");
-                let msg_sanitized = &re_attempting_cross_one.replace_all(msg_sanitized, "Attempting cross: #some-id/#currency -> #currency");
-                let msg_sanitized = &re_attempting_cross_two.replace_all(msg_sanitized, "Attempting cross: #currency -> #some-id/#currency");
-                let msg_sanitized = &re_final_result.replace_all(msg_sanitized, "final result: #some");
-                let msg_sanitized = &re_order_some_value.replace_all(msg_sanitized, "order #some-value");
-                let msg_sanitized = &re_has_some_some_required.replace_all(msg_sanitized, "has #some, #some required");
+                let msg_sanitized =
+                    &re_balance_some.replace_all(msg_sanitized, "Balance: #some-value/#currency");
+                let msg_sanitized =
+                    &re_offer_out.replace_all(msg_sanitized, "Offer out: #some-value/#currency");
+                let msg_sanitized = &re_offer_in_some_issuer
+                    .replace_all(msg_sanitized, "Offer in: #some-value/#currency");
+                let msg_sanitized =
+                    &re_crossing_as_some.replace_all(msg_sanitized, "Crossing as: #some-id");
+                let msg_sanitized = &re_attempting_cross_one.replace_all(
+                    msg_sanitized,
+                    "Attempting cross: #some-account/#currency -> #currency",
+                );
+                let msg_sanitized = &re_attempting_cross_two.replace_all(
+                    msg_sanitized,
+                    "Attempting cross: #currency -> #some-account/#currency",
+                );
+                let msg_sanitized = &re_attempting_cross_double.replace_all(
+                    msg_sanitized,
+                    "Attempting cross: #some-account/#currency -> #some-account/#currency",
+                );
+                // let msg_sanitized =
+                //     &re_final_result.replace_all(msg_sanitized, "final result: #some");
+                let msg_sanitized =
+                    &re_order_some_value.replace_all(msg_sanitized, "order #some-value");
+                let msg_sanitized = &re_has_some_some_required
+                    .replace_all(msg_sanitized, "has #some, #some required");
                 let msg_sanitized = &re_seq_some.replace_all(msg_sanitized, "seq #some:");
                 let msg_sanitized = &re_some_nays_object.replace_all(msg_sanitized, "{truncated}");
-                let msg_sanitized = &re_some_differences.replace_all(msg_sanitized, "#some differences");
+                let msg_sanitized =
+                    &re_some_differences.replace_all(msg_sanitized, "#some differences");
                 let msg_sanitized = &re_success_some.replace_all(msg_sanitized, "success #some");
-                let msg_sanitized = &re_some_processed.replace_all(msg_sanitized, "#some processed");
+                let msg_sanitized =
+                    &re_some_processed.replace_all(msg_sanitized, "#some processed");
+                let msg_sanitized = &re_account_some.replace_all(msg_sanitized, "#some-account");
                 let msg_sanitized = &re_ledger_some.replace_all(msg_sanitized, "Ledger #some");
+                let msg_sanitized =
+                    &re_done_complete.replace_all(msg_sanitized, "complete #some-num");
+                // replace ledger close times
+                let msg_sanitized =
+                    &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
+                let msg_sanitized = &re_fetch_pack.replace_all(msg_sanitized, "pack for #some-obj");
+                let msg_sanitized = &re_num_out_of.replace_all(msg_sanitized, "#some out of #some");
+                let msg_sanitized = &re_books_found.replace_all(msg_sanitized, "#some books found");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
@@ -415,6 +463,7 @@ fn map_log(log: &String) -> &str {
         "View of consensus changed during open status=open,  mode=proposing" => {
             "viewChangeOpenToProposing"
         }
+        "View of consensus changed during establish status=establish,  mode=proposing" => "viewChangeEstablishProposing",
 
         "Consensus mode change before=observing, after=switchedLedger" => {
             "modeObservingToSwitchedLedger"
@@ -551,10 +600,95 @@ fn map_log(log: &String) -> &str {
         "Transaction #some-base-16-hash is disputed" => "transactionIsDisputed",
         "Acquired TX set #some-base-16-hash" => "acquiredTxSetHash",
         "Consensus built ledger we were acquiring" => "consensusBuiltLedgerWeAcquired",
-        "" => "",
-        "" => "",
-        "" => "",
-        "" => "",
+        "Taker Crossing as: #some-id" => "takerCrossingAsId",
+        "Taker    Offer in: #some-value/#currency" => "takerOfferIn",
+        "Taker   Offer out: #some-value/#currency" => "takerOfferOut",
+        "Taker     Balance: #some-value/#currency" => "takerOfferBalance",
+        "Create cancels order #some-value" => "createCancelsOrder",
+        "Attempting cross: #some-account/#currency -> #currency" => "attemptCrossCurrency",
+        "Attempting cross: #currency -> #some-account/#currency" => "attemptCrossCurrency",
+        "Attempting cross: #some-account/#currency -> #some-account/#currency" => "attemptCrossCurrency",
+        "final result: success" => "finalResultSuccess",
+        "{truncated}" => "ledgerInfoLog",
+        "#some differences found" => "someDifferences",
+        "CCTime: seq #some: #some-peer-node has #some, #some required" => "cctimeSeqRequired",
+        "Taker    Offer in:#some-ledger-close-timeXRP" => "takerOfferInLedgerClose",
+        "Taker   Offer out:#some-ledger-close-timeXRP" => "takerOfferOutLedgerClose",
+        "Status other than success #some" => "statusOtherSuccess",
+        "We now vote YES on #some-base-16-hash" => "nowVoteYes",
+        "We now vote NO on #some-base-16-hash" => "nowVoteNo",
+        "Timeout(#some) pc=#some acquiring #some-base-16-hash" => "timeoutPcAcquiring",
+        "Pass: #some begins (#some transactions)" => "passSomeBegins",
+        "Pass: #some completed (#some changes)" => "passSomeCompleted",
+        "Not creating disputes: no position yet." => "notCreatingDisputesNoPos",
+        "Applied #some transactions." => "appliedTransactions",
+        "Flushed #some accounts and #some transactions nodes" => "flushedAccountsAndNodes",
+        "Ledger #some-peer-node has #some transactions. Ledgers are processing as expected. Expected transactions is currently #some and multiplier is #some" => "expectedTransactionsMul",
+        "Final pass: #some begins (#some transactions)" => "finalPassBegins",
+        "Final pass: #some completed (#some changes)" => "finalPassCompleted",
+        "Expected transactions updated to #some and multiplier updated to #some" => "exectedTransactions",
+        "Transaction should be held: #some" => "transactionShouldHeld",
+        "ValidationTrie #some-branch-support-object" => "validationTrieBranch",
+        "Queued transaction #some-base-16-hash rules or flags have changed. Flags from #some_number to #some" => "queuedTxRulesChanged",
+        "Queued transaction #some-base-16-hash applied successfully with tecPATH_DRY. Remove from queue." => "queuedTxAppliedPathDry",
+        "Queued transaction #some-base-16-hash applied successfully with tesSUCCESS. Remove from queue." => "queuedTxAppliedSuccess",
+        "Transaction is likely to claim a fee, but is queued until fee drops" => "txFeeQueued",
+        "Trying to cancel offer #some-num" => "tryCancelOffer",
+        "Proposal: Dropping UNTRUSTED (load)" => "proposalDropUntrusted",
+        "Validation: Dropping UNTRUSTED (load)" => "validationDropUntrusted",
+        "Added transaction #some-base-16-hash with result tesSUCCESS from existing account #some-account to queue. Flags: 0" => "addedTxSuccessAccount",
+        "Added transaction #some-base-16-hash with result tesSUCCESS from new account #some-account to queue. Flags: 0" => "addedTxSuccessNewAccount",
+        "Attempting to apply #some transactions" => "attemptApplyTxs",
+        "not pausing (#truncated)" => "notPausing",
+        "Checking for TX consensus: agree=#some, disagree=#some" => "checkingTxConsensus",
+        "Report: Prop=#some val=#some corLCL=#some fail=#some" => "reportPropvalColLCLFail",
+        "Report: Prev = #some-base-16-hash:#some" => "reportPrev",
+        "Acquire #some-base-16-hash timeouts:1 good:#some-good-num dupe:#some-dupe-num" => "acquireHashTimeoutGoodDupe",
+        "Using quorum of #some for new set of #some trusted validators (#some added, #some removed)" => "UseQuorumNewValidators",
+        "MATCH: seq=#" => "matchSeq",
+        "tryAdvance publishing seq #some:" => "tryAdvancePublish",
+        "Ledger #some accepted :#some-base-16-hash" => "ledgerAcceptedHash",
+        "updateAll complete: #some processed and #some removed" => "upgradeAllComplete",
+        "No progress(#some) for ledger #some-base-16-hash" => "noProgressLedger",
+        "Done: complete #some-num" => "doneComplete",
+        "Val for #some-base-16-hash trusted/full from #some-id signing key #some-id current src=local" => "valTrustedFullCurrent",
+        "Consensus ledger fully validated" => "consensusLedgerFullyValidated",
+        "Can't get seq #some: from #some_number past" => "cantGetSeqFrom",
+        "Relaying disputed tx #some-base-16-hash" => "replayingDisputedTx",
+        "Ledger TX node stats: dupe:#some-dupe-num" => "ledgerTxNodeStatsDupe",
+        "Acquire #some-base-16-hash good:#some-good-num dupe:#some-dupe-num" => "acquireHashGoodDupe",
+        "activated #some-ip (#some:#some-id)" => "activatedIp",
+        "Had everything locally" => "everythingLocal",
+        "Acquire #some-base-16-hash timeouts:1 no nodes processed" => "acquireTimeoutNoNodes",
+        "Trigger on ledger: #some-base-16-hash completed" => "triggerLedgerHashCompleted",
+        "Acquire #some-base-16-hash timeouts:1 good:#some-good-num" => "acquireTimeoutGood",
+        "Offer #some-num can't be found." => "offerNotFound",
+        "Queued transaction #some-base-16-hash failed with tefPAST_SEQ. Remove from queue." => "queuedTxFailedPastSeq",
+        "TMManifest, #some-items items" => "manifestItems",
+        "Val for #some-base-16-hash UNtrusted/full from #some-id signing key #some-id current src=#some-src-num" => "valUntrustedFullSigning",
+        "Node on our acquiring TX set is TXN we may not have" => "nodeAcquiringTxMayNotHave",
+        "Transaction retry: The source account does not exist." => "txRetrySourceNonExist",
+        "Got root TXS node, already have it" => "gotRootTxsHaveIt",
+        "Acquire #some-base-16-hash abort timeouts:1 good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
+        "Acquire #some-base-16-hash abort timeouts:4 good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
+        "activated [::ffff:#some-ip]:51235 (#some:#some-id)" => "activatedIp",
+        "Consensus triggered check of ledger" => "consensusTriggeredLedgerCheck",
+        "Acquire #some-base-16-hash timeouts:3 good:#some-good-num dupe:#some-dupe-num" => "acquireTimeout",
+        "Acquire #some-base-16-hash timeouts:2 good:#some-good-num dupe:#some-dupe-num" => "acquireTimeout",
+        "Acquire #some-base-16-hash abort timeouts:3 good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
+        "GetObj: Late fetch pack for #some-obj" => "getObjLateFetch",
+        "GetObj: Partial fetch pack for #some-obj" => "getObjPartialFetch",
+        "Acquire #some-base-16-hash no nodes processed" => "acquireNoNodes",
+        "Ledger #some-peer-node has #some transactions. Ledgers are processing slowly. Expected transactions is currently #some and multiplier is #some" => "ledgerHashTxsProcessingSlow",
+        "Status: Out of sync" => "statusOutOfSync",
+        "Advancing from #some_number to #some" => "advanceFromTo",
+        "OrderBookDB::update>" => "orderBookUpdate",
+        "#some-branch-support-object" => "someBranchSupportobject",
+        "Val for #some-base-16-hash trusted/partial from #some-id signing key #some-id current src=local" => "valTrustedPartialCurrent",
+        "GetObj: Full fetch pack for #some-obj" => "getObjFullFetch",
+        "Swept #some out of #some inbound ledgers." => "sweptSomeLedgers",
+        "Must wait minimum time before closing" => "mustWaitMinBeforeClosing",
+        "OrderBookDB::update< #some books found" => "someBooksFound",
 
         _ => {
             println!("{}", log);
