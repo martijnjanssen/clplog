@@ -159,18 +159,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         let capture_res = re.captures(l.as_str());
         match capture_res {
             Some(mtch) => {
-                if !match_line(mtch.get(2).unwrap(), mtch.get(3).unwrap()) {
-                    continue;
-                }
-
-                let msg = match mtch.get(1) {
-                    Some(m) => m.as_str(),
-                    None => {
-                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
-                            "unable to get match from parsed log",
-                        ))
-                    }
-                };
+                let msg = mtch.get(1).unwrap().as_str();
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
                     rounds += 1;
@@ -179,6 +168,10 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     all_log_sequence.push(Vec::new());
                     started = true;
+                }
+
+                if !match_line(mtch.get(2).unwrap(), mtch.get(3).unwrap()) {
+                    continue;
                 }
 
                 if !started {
