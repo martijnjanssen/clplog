@@ -385,8 +385,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // dbg!(all_log_sequence);
     // dbg!(log_list);
 
-    let mut prev: &u64 = &u64::max_value();
-    let mut pprev: &u64 = &u64::max_value();
+    all_log_sequence = clean_all_log_sequence(all_log_sequence);
 
     let parsed_filename = filename.to_owned() + ".parsed";
     let parsed_file = File::create(parsed_filename)?;
@@ -396,42 +395,24 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let labeled_file = File::create(labeled_filename)?;
     let mut labeled_file = BufWriter::new(labeled_file);
 
-    writeln!(parsed_file, "{} {}", all_log_sequence.len(), log_list.len())?;
-    writeln!(
-        labeled_file,
-        "{} {}",
-        all_log_sequence.len(),
-        log_list.len()
-    )?;
+    let length = all_log_sequence.len();
+    let alphabet_size = log_list.len();
+    writeln!(parsed_file, "{} {}", length, alphabet_size)?;
+    writeln!(labeled_file, "{} {}", length, alphabet_size)?;
     for item in all_log_sequence.iter() {
-        let mut log_string: String = "".to_owned();
-        let mut labeled_log_string: String = "".to_owned();
-
-        // Build the string to log
-        for log_id in item.iter() {
-            // If the previous 2 printed items are identical, don't print the result
-            if log_id == prev && log_id == pprev {
-            } else {
-                // Add the id's to the line
-                log_string.push_str(format!(" {}", log_id).as_str());
-                // Add the labels to the line
-                labeled_log_string.push_str(
-                    format!(" {}", map_log(log_list.get(*log_id as usize).unwrap())).as_str(),
-                );
-            }
-            // Shift the two previous values
-            pprev = prev;
-            prev = log_id;
-        }
-
-        // Split the string on spaces and count the amount of entries
-        let len = log_string.trim().split(" ").collect::<Vec<&str>>().len();
-
         // Write to all files
+        let len = item.len();
         write!(parsed_file, "1 {}", len)?;
-        write!(parsed_file, "{}", log_string)?;
         write!(labeled_file, "1 {}", len)?;
-        write!(labeled_file, "{}", labeled_log_string)?;
+
+        // Write log ids and labels to file
+        for log_id in item.iter() {
+            // Add the id's to the line
+            write!(parsed_file, " {}", log_id)?;
+            // Add the labels to the line
+            let log_label = map_log(log_list.get(*log_id as usize).unwrap());
+            write!(labeled_file, " {}", log_label)?;
+        }
 
         writeln!(parsed_file)?;
         writeln!(labeled_file)?;
@@ -443,6 +424,33 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     write_mapping(mapping_file, log_list)?;
 
     Ok(())
+}
+
+fn clean_all_log_sequence(all_log_sequence: Vec<Vec<u64>>) -> Vec<Vec<u64>> {
+    let mut new_all_log_sequence = Vec::<Vec<u64>>::new();
+
+    for item in all_log_sequence.iter() {
+        let mut new_sequence = Vec::new();
+
+        let mut prev: &u64 = &u64::max_value();
+        let mut pprev: &u64 = &u64::max_value();
+
+        // Build the string to log
+        for log_id in item.iter() {
+            // If the previous 2 log ids are identical, don't add it again
+            if log_id == prev && log_id == pprev {
+            } else {
+                new_sequence.push(*log_id);
+            }
+            // Shift the two previous values
+            pprev = prev;
+            prev = log_id;
+        }
+
+        new_all_log_sequence.push(new_sequence);
+    }
+
+    return new_all_log_sequence;
 }
 
 fn write_mapping(out_file: File, log_list: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
