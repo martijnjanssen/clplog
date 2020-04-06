@@ -1,7 +1,9 @@
+use indicatif::ProgressBar;
 use regex::Match;
 use regex::Regex;
 use std::boxed::Box;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
@@ -24,6 +26,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), Box<dyn std::error::Error>> {
+    let bar = ProgressBar::new(STOP_ROUNDS.try_into().unwrap());
     let args = env::args().collect::<Vec<String>>();
     if args.len() < 2 {
         return Err(Box::<dyn std::error::Error + Send + Sync>::from(
@@ -163,6 +166,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
                     rounds += 1;
+                    bar.inc(1);
                     if rounds > STOP_ROUNDS && STOP_ROUNDS != -1 {
                         break;
                     }
@@ -375,6 +379,8 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+
+    bar.finish();
 
     // dbg!(all_log_sequence);
     // dbg!(log_list);
