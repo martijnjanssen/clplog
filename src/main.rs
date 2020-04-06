@@ -698,7 +698,7 @@ fn map_log(log: &String) -> &str {
         "OrderBookDB::update< #some books found" => "someBooksFound",
 
         _ => {
-            println!("{}", log);
+            println!("no mapping for log: {}", log);
             "unknownLog"
         }
     }
