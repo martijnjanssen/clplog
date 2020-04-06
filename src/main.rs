@@ -55,8 +55,8 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // Regex matching entire line, 2 matching groups, omitting date+time, separated on semicolon
     // let re = Regex::new(r"\d{4}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Oct|Sep|Nov|Dec)-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{9}\s(\w+):(.+)").unwrap();
 
-    // Shorter regex separating on spaces in the log line, first match is the entire line, 1 is the origin, 2 is the level, 3 is the message
-    let re = Regex::new(r".{11}\s.{18}\s((\w+):(\w+\s.+))").unwrap();
+    // Shorter regex separating on spaces in the log line, first match is the entire line, 1 is the message, 2 is the origin, 3 is the level
+    let re = Regex::new(r".{11}\s.{18}\s((\w+):(\w+)\s.+)").unwrap();
 
     let re_base_16 = Regex::new(r"[0-9A-F]{64}").unwrap();
     let re_alpha_num_id = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
