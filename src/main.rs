@@ -178,12 +178,12 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 };
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
-                    all_log_sequence.push(Vec::new());
-                    started = true;
                     rounds += 1;
-                    if rounds == STOP_ROUNDS && STOP_ROUNDS != -1 {
+                    if rounds > STOP_ROUNDS && STOP_ROUNDS != -1 {
                         break;
                     }
+                    all_log_sequence.push(Vec::new());
+                    started = true;
                 }
 
                 if !started {
