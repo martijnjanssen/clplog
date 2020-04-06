@@ -42,9 +42,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // let stdout = stdout.lock();
     // let mut buf_writer = BufWriter::new(stdout);
 
-    let mut match_counter = 0;
-    let mut no_match_counter = 0;
-
     let mut rounds = 0;
 
     // Count distinct logs
@@ -162,8 +159,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         let capture_res = re.captures(l.as_str());
         match capture_res {
             Some(mtch) => {
-                match_counter += 1;
-
                 if !match_line(mtch.get(2).unwrap()) {
                     continue;
                 }
@@ -380,7 +375,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             None => {
-                no_match_counter += 1;
                 // eprintln!("found no match in line: {}", l);
             }
         }
@@ -445,9 +439,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mapping_file = File::create(mapping_filename)?;
 
     write_mapping(mapping_file, log_list)?;
-
-    // println!("total number of matches: {}", match_counter);
-    // println!("total number of non-matches: {}", no_match_counter);
 
     Ok(())
 }
