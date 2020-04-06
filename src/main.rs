@@ -159,7 +159,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
         let capture_res = re.captures(l.as_str());
         match capture_res {
             Some(mtch) => {
-                if !match_line(mtch.get(2).unwrap()) {
+                if !match_line(mtch.get(2).unwrap(), mtch.get(3).unwrap()) {
                     continue;
                 }
 
@@ -320,12 +320,15 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = &re_num_out_of.replace_all(msg_sanitized, "#some out of #some");
                 let msg_sanitized = &re_books_found.replace_all(msg_sanitized, "#some books found");
                 let msg_sanitized = &re_timeouts_some.replace_all(msg_sanitized, "timeouts:#some");
-                let msg_sanitized = &re_status_other_than.replace_all(msg_sanitized, "Status other than #some");
+                let msg_sanitized =
+                    &re_status_other_than.replace_all(msg_sanitized, "Status other than #some");
                 let msg_sanitized = &re_thresh_some.replace_all(msg_sanitized, "Thresh:#some");
                 let msg_sanitized = &re_save_for.replace_all(msg_sanitized, "pack for #some");
                 let msg_sanitized = &re_ledger_obj.replace_all(msg_sanitized, "{truncated}");
-                let msg_sanitized = &re_some_failed_and_some.replace_all(msg_sanitized, "#some failed and #some");
-                let msg_sanitized = &re_node_count_some.replace_all(msg_sanitized, "Node count (#some)");
+                let msg_sanitized =
+                    &re_some_failed_and_some.replace_all(msg_sanitized, "#some failed and #some");
+                let msg_sanitized =
+                    &re_node_count_some.replace_all(msg_sanitized, "Node count (#some)");
 
                 let msg_sanitized = msg_sanitized.to_string();
 
@@ -702,9 +705,17 @@ fn map_log(log: &String) -> &str {
     }
 }
 
-fn match_line(mtch: Match) -> bool {
+fn match_line(origin: Match, level: Match) -> bool {
+    let is_debug = match level.as_str() {
+        "DBG" => true,
+        _unknown => false,
+    };
+    if !is_debug {
+        return false;
+    }
+
     // Match on all log categories
-    let res = match mtch.as_str() {
+    let res = match origin.as_str() {
         "NetworkOPs" => true,
         "LedgerConsensus" => true,
         "LedgerMaster" => true,
