@@ -109,35 +109,14 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 // get the log id
-                let log_id = match log_id_map.get(&msg_sanitized) {
-                    Some(id) => id,
-                    None => {
-                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
-                            "should have entry for log id",
-                        ));
-                    }
-                };
+                let log_id = log_id_map.get(&msg_sanitized).unwrap();
 
                 // increase the count
-                match log_counts.get_mut(*log_id as usize) {
-                    Some(count) => *count += 1,
-                    None => {
-                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
-                            "should have count for entry",
-                        ));
-                    }
-                }
+                *(log_counts.get_mut(*log_id as usize).unwrap()) += 1;
 
                 // append the id to the current sequence, if none found, add a new one
                 let log_index = all_log_sequence.len() - 1;
-                match all_log_sequence.get_mut(log_index) {
-                    Some(sequence) => sequence.push(*log_id),
-                    None => {
-                        return Err(Box::<dyn std::error::Error + Send + Sync>::from(
-                            "should have entry in log sequence",
-                        ));
-                    }
-                }
+                all_log_sequence.get_mut(log_index).unwrap().push(*log_id);
             }
             None => {
                 // eprintln!("found no match in line: {}", l);
