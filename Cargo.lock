@@ -37,6 +37,7 @@ name = "clplog"
 version = "0.1.0"
 dependencies = [
  "indicatif",
+ "lazy_static",
  "quick-error",
  "regex",
 ]

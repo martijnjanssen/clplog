@@ -1,3 +1,7 @@
+#![recursion_limit = "16384"]
+#[macro_use]
+extern crate lazy_static;
+
 use indicatif::ProgressBar;
 use regex::Match;
 use regex::Regex;
@@ -14,7 +18,7 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static STOP_ROUNDS: i32 = 100;
+static STOP_ROUNDS: i32 = 30;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
 
@@ -61,100 +65,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // Shorter regex separating on spaces in the log line, first match is the entire line, 1 is the message, 2 is the origin, 3 is the level
     let re = Regex::new(r".{11}\s.{18}\s((\w+):(\w+)\s.+)").unwrap();
 
-    let re_base_16 = Regex::new(r"[0-9A-F]{64}").unwrap();
-    let re_alpha_num_id = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
-    let re_ip = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
-    let re_hash_num = Regex::new(r"#\d+").unwrap();
-    let re_ledger_close_time = Regex::new(r"(?:[^\d])\d{9}(?:[^\d]|$)").unwrap();
-    let re_weight = Regex::new(r"weight -?\d{1,2}").unwrap();
-    let re_percent = Regex::new(r"percent \d{1,3}").unwrap();
-    let re_votes = Regex::new(r"\d{1,3} time votes").unwrap();
-    let re_participants = Regex::new(r"\d{1,3} participants").unwrap();
-    let re_ledger_id = Regex::new(r": \d+ <=").unwrap();
-    let re_ledger_id_trail = Regex::new(r"<= \d+").unwrap();
-    let re_advance_ledger_id = Regex::new(r"\d+ with >= \d+").unwrap();
-    let re_ledger_json_log = Regex::new(r"\{.+close_time_human.+\}").unwrap();
-    let re_proposers = Regex::new(r"Proposers:\d{1,3}").unwrap();
-    let re_thresh_weight = Regex::new(r"nw:\d{1,3}").unwrap();
-    let re_thresh_vote = Regex::new(r"thrV:\d{1,3}").unwrap();
-    let re_thresh_consensus = Regex::new(r"thrC:\d{1,3}").unwrap();
-    let re_offset_estimate = Regex::new(r"is estimated at -?\d \(\d{1,3}\)").unwrap();
-    let re_num_nodes = Regex::new(r"\d+ nodes").unwrap();
-    let re_brackets_num = Regex::new(r"\[\d+\]").unwrap();
-    let re_seq_num = Regex::new(r"seq=\d+").unwrap();
-    let re_ledger_timeouts = Regex::new(r"\d+ timeouts for ledger \d+").unwrap();
-    let re_missing_node = Regex::new(r"Missing node in \d+").unwrap();
-    let re_some_tasks = Regex::new(r"\d+ tasks").unwrap();
-    let re_some_jobs = Regex::new(r"\d+ jobs").unwrap();
-    let re_some_items = Regex::new(r"\d+ items").unwrap();
-    let re_some_of_some = Regex::new(r"\d+  of \d+ listed").unwrap();
-    let re_some_of = Regex::new(r"\d+ of").unwrap();
-    let re_of_some_for = Regex::new(r"of \d+ for").unwrap();
-    let re_some_some_id = Regex::new(r"\d+:#some-id").unwrap();
-    let re_some_trusted = Regex::new(r"\d+ trusted").unwrap();
-    let re_some_added = Regex::new(r"\d+ added").unwrap();
-    let re_some_removed = Regex::new(r"\d+ removed").unwrap();
-    let re_some_good_num = Regex::new(r"good:\d+").unwrap();
-    let re_some_dupe_num = Regex::new(r"dupe:\d+").unwrap();
-    let re_some_src = Regex::new(r"src=\d+").unwrap();
-    let re_some_from = Regex::new(r"from \d+").unwrap();
-    let re_some_n = Regex::new(r"n=\d+").unwrap();
-    let re_some_peer = Regex::new(r"Peer [0-9A-F]+ votes").unwrap();
-    let re_some_peer_now = Regex::new(r"Peer [0-9A-F]+ now").unwrap();
-    let re_some_peer_has = Regex::new(r"[0-9A-F]+ has").unwrap();
-    let re_some_peer_votes = Regex::new(r"votes \w+ on").unwrap();
-    let re_some_transactions = Regex::new(r"\d+ transactions?").unwrap();
-    let re_some_changes = Regex::new(r"\d+ changes").unwrap();
-    let re_some_and = Regex::new(r"\d+ and").unwrap();
-    let re_some_begins = Regex::new(r"\d+ begins").unwrap();
-    let re_some_completed = Regex::new(r"\d+ completed").unwrap();
-    let re_some_accounts = Regex::new(r"\d+ accounts?").unwrap();
-    let re_is_some_nl = Regex::new(r"is \d+$").unwrap();
-    let re_to_some_nl = Regex::new(r"to \d+$").unwrap();
-    let re_hash_colon_some = Regex::new(r"#some-base-16-hash:\d+").unwrap();
-    let re_some_branch_support_object = Regex::new(r"\{.+branchSupport.+}").unwrap();
-    let re_agree_disagree = Regex::new(r"agree=\d+, disagree=\d+$").unwrap();
-    let re_some_consensus_dbg = Regex::new(r"\(working seq.+quorum: \d+\)").unwrap();
-    let re_report_some_prop = Regex::new(r"Prop=.+fail=[a-z]{2,3}$").unwrap();
-    let re_progress_some = Regex::new(r"progress\(\d+\)").unwrap();
-    let re_timeout_some = Regex::new(r"Timeout\(\d+\) pc=\d+ acquiring").unwrap();
-    let re_held_some = Regex::new(r"held: -*\d+$").unwrap();
-    let re_balance_some = Regex::new(r"Balance: \d+(\.\d+)?/[A-Z]{3}$").unwrap();
-    let re_offer_out =
-        Regex::new(r"Offer out: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$").unwrap();
-    let re_offer_in_some_issuer =
-        Regex::new(r"Offer in: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$").unwrap();
-    let re_crossing_as_some = Regex::new(r"Crossing as: r[A-Za-z0-9]{25,35}$").unwrap();
-    let re_attempting_cross_one =
-        Regex::new(r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> [A-Z]{3}$").unwrap();
-    let re_attempting_cross_two =
-        Regex::new(r"Attempting cross: [A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$").unwrap();
-    let re_attempting_cross_double = Regex::new(
-        r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$",
-    )
-    .unwrap();
-    let re_final_result = Regex::new(r"final result: [a-z]+$").unwrap();
-    let re_order_some_value = Regex::new(r"order \d+$").unwrap();
-    let re_has_some_some_required = Regex::new(r"has \d+, \d+ required$").unwrap();
-    let re_seq_some = Regex::new(r"seq \d+:?").unwrap();
-    let re_some_nays_object = Regex::new(r"\{.+nays.+}").unwrap();
-    let re_some_differences = Regex::new(r"\d+ differences").unwrap();
-    let re_success_some = Regex::new(r"success \d+").unwrap();
-    let re_some_processed = Regex::new(r"\d+ processed").unwrap();
-    let re_ledger_some = Regex::new(r"Ledger \d+").unwrap();
-    let re_account_some = Regex::new(r"r[a-zA-Z0-9]{25,35}").unwrap();
-    let re_done_complete = Regex::new(r"complete \d+").unwrap();
-    let re_fetch_pack = Regex::new(r"pack for \d+").unwrap();
-    let re_num_out_of = Regex::new(r"\d+ out of \d+").unwrap();
-    let re_books_found = Regex::new(r"\d+ books found").unwrap();
-    let re_timeouts_some = Regex::new(r"timeouts:\d+").unwrap();
-    let re_status_other_than = Regex::new(r"Status other than -?\d+").unwrap();
-    let re_thresh_some = Regex::new(r"Thresh:\d+").unwrap();
-    let re_save_for = Regex::new(r"save for \d+").unwrap();
-    let re_ledger_obj = Regex::new(r"\{.+acquired.+}").unwrap();
-    let re_some_failed_and_some = Regex::new(r"\d+ failed and \d+").unwrap();
-    let re_node_count_some = Regex::new(r"Node count \(\d+\)").unwrap();
-
     let mut started = false;
 
     while let Some(line) = contents.next() {
@@ -182,152 +92,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
 
-                // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
-                let msg_sanitized = &re_base_16.replace_all(msg, "#some-base-16-hash");
-                // replace alpha numerical ids of length 52 (e.g.: nHBe4vqSAzjpPRLKwSFzRFtmvzXaf5wPPmuVrQCAoJoS1zskgDA4)
-                let msg_sanitized = &re_alpha_num_id.replace_all(msg_sanitized, "#some-id");
-                // replace ip addresses
-                let msg_sanitized = &re_ip.replace_all(msg_sanitized, "#some-ip");
-                // replace numbers with '#' prefix (e.g.: #5334)
-                let msg_sanitized = &re_hash_num.replace_all(msg_sanitized, "#some-num");
-                let msg_sanitized =
-                    &re_some_peer.replace_all(msg_sanitized, "Peer #some-peer-node votes");
-                let msg_sanitized =
-                    &re_some_peer_now.replace_all(msg_sanitized, "Peer #some-peer-node now");
-                let msg_sanitized =
-                    &re_some_peer_has.replace_all(msg_sanitized, "#some-peer-node has");
-                let msg_sanitized =
-                    &re_some_peer_votes.replace_all(msg_sanitized, "votes #some-vote on");
-                let msg_sanitized = &re_weight.replace_all(msg_sanitized, "#some-weight");
-                let msg_sanitized = &re_percent.replace_all(msg_sanitized, "#some-percent");
-                let msg_sanitized = &re_votes.replace_all(msg_sanitized, "#some-votes time votes");
-                let msg_sanitized =
-                    &re_participants.replace_all(msg_sanitized, "#some-participants");
-                let msg_sanitized =
-                    &re_ledger_id.replace_all(msg_sanitized, ": #some-ledger-id <=");
-                let msg_sanitized =
-                    &re_ledger_id_trail.replace_all(msg_sanitized, "<= #some-ledger-id");
-                let msg_sanitized = &re_advance_ledger_id
-                    .replace_all(msg_sanitized, "#some-ledger-id >= #validations");
-                let msg_sanitized =
-                    &re_ledger_json_log.replace_all(msg_sanitized, "LEDGER_STATUS_JSON_LOG");
-                let msg_sanitized =
-                    &re_proposers.replace_all(msg_sanitized, "Proposers:#some-proposers");
-                let msg_sanitized =
-                    &re_thresh_weight.replace_all(msg_sanitized, "#some-needweight");
-                let msg_sanitized = &re_thresh_vote.replace_all(msg_sanitized, "#some-thresh-vote");
-                let msg_sanitized =
-                    &re_thresh_consensus.replace_all(msg_sanitized, "#some-thresh-consensus");
-                let msg_sanitized = &re_offset_estimate.replace_all(
-                    msg_sanitized,
-                    "is estimated at #some-offset (#some-closecount)",
-                );
-                let msg_sanitized = &re_num_nodes.replace_all(msg_sanitized, "#num nodes");
-                let msg_sanitized = &re_brackets_num.replace_all(msg_sanitized, "");
-                let msg_sanitized = &re_seq_num.replace_all(msg_sanitized, "seq=#");
-                let msg_sanitized = &re_ledger_timeouts
-                    .replace_all(msg_sanitized, "# timeouts for ledger #some-ledger-id");
-                let msg_sanitized =
-                    &re_missing_node.replace_all(msg_sanitized, "Missing node in #some-ledger-id");
-                let msg_sanitized = &re_some_tasks.replace_all(msg_sanitized, "#some-tasks tasks");
-                let msg_sanitized = &re_some_jobs.replace_all(msg_sanitized, "#some-jobs jobs");
-                let msg_sanitized = &re_some_items.replace_all(msg_sanitized, "#some-items items");
-                let msg_sanitized =
-                    &re_some_of_some.replace_all(msg_sanitized, "#some of #some listed");
-                let msg_sanitized = &re_some_of.replace_all(msg_sanitized, "#some of");
-                let msg_sanitized = &re_of_some_for.replace_all(msg_sanitized, "of #some for");
-                let msg_sanitized = &re_some_some_id.replace_all(msg_sanitized, "#some:#some-id");
-                let msg_sanitized = &re_some_trusted.replace_all(msg_sanitized, "#some trusted");
-                let msg_sanitized = &re_some_added.replace_all(msg_sanitized, "#some added");
-                let msg_sanitized = &re_some_removed.replace_all(msg_sanitized, "#some removed");
-                let msg_sanitized =
-                    &re_some_good_num.replace_all(msg_sanitized, "good:#some-good-num");
-                let msg_sanitized =
-                    &re_some_dupe_num.replace_all(msg_sanitized, "dupe:#some-dupe-num");
-                let msg_sanitized = &re_some_src.replace_all(msg_sanitized, "src=#some-src-num");
-                let msg_sanitized = &re_some_from.replace_all(msg_sanitized, "from #some_number");
-                let msg_sanitized = &re_some_n.replace_all(msg_sanitized, "n=#some-num");
-                let msg_sanitized =
-                    &re_some_transactions.replace_all(msg_sanitized, "#some transactions");
-                let msg_sanitized = &re_some_changes.replace_all(msg_sanitized, "#some changes");
-                let msg_sanitized = &re_some_and.replace_all(msg_sanitized, "#some and");
-                let msg_sanitized = &re_some_begins.replace_all(msg_sanitized, "#some begins");
-                let msg_sanitized =
-                    &re_some_completed.replace_all(msg_sanitized, "#some completed");
-                let msg_sanitized = &re_some_accounts.replace_all(msg_sanitized, "#some accounts");
-                let msg_sanitized = &re_is_some_nl.replace_all(msg_sanitized, "is #some");
-                let msg_sanitized = &re_to_some_nl.replace_all(msg_sanitized, "to #some");
-                let msg_sanitized =
-                    &re_hash_colon_some.replace_all(msg_sanitized, "#some-base-16-hash:#some");
-                let msg_sanitized = &re_some_branch_support_object
-                    .replace_all(msg_sanitized, "#some-branch-support-object");
-                let msg_sanitized =
-                    &re_agree_disagree.replace_all(msg_sanitized, "agree=#some, disagree=#some");
-                let msg_sanitized =
-                    &re_some_consensus_dbg.replace_all(msg_sanitized, "(#truncated)");
-                let msg_sanitized = &re_report_some_prop.replace_all(
-                    msg_sanitized,
-                    "Prop=#some val=#some corLCL=#some fail=#some",
-                );
-                let msg_sanitized = &re_progress_some.replace_all(msg_sanitized, "progress(#some)");
-                let msg_sanitized = &re_timeout_some
-                    .replace_all(msg_sanitized, "Timeout(#some) pc=#some acquiring");
-                let msg_sanitized = &re_held_some.replace_all(msg_sanitized, "held: #some");
-                let msg_sanitized =
-                    &re_balance_some.replace_all(msg_sanitized, "Balance: #some-value/#currency");
-                let msg_sanitized =
-                    &re_offer_out.replace_all(msg_sanitized, "Offer out: #some-value/#currency");
-                let msg_sanitized = &re_offer_in_some_issuer
-                    .replace_all(msg_sanitized, "Offer in: #some-value/#currency");
-                let msg_sanitized =
-                    &re_crossing_as_some.replace_all(msg_sanitized, "Crossing as: #some-id");
-                let msg_sanitized = &re_attempting_cross_one.replace_all(
-                    msg_sanitized,
-                    "Attempting cross: #some-account/#currency -> #currency",
-                );
-                let msg_sanitized = &re_attempting_cross_two.replace_all(
-                    msg_sanitized,
-                    "Attempting cross: #currency -> #some-account/#currency",
-                );
-                let msg_sanitized = &re_attempting_cross_double.replace_all(
-                    msg_sanitized,
-                    "Attempting cross: #some-account/#currency -> #some-account/#currency",
-                );
-                // let msg_sanitized =
-                //     &re_final_result.replace_all(msg_sanitized, "final result: #some");
-                let msg_sanitized =
-                    &re_order_some_value.replace_all(msg_sanitized, "order #some-value");
-                let msg_sanitized = &re_has_some_some_required
-                    .replace_all(msg_sanitized, "has #some, #some required");
-                let msg_sanitized = &re_seq_some.replace_all(msg_sanitized, "seq #some:");
-                let msg_sanitized = &re_some_nays_object.replace_all(msg_sanitized, "{truncated}");
-                let msg_sanitized =
-                    &re_some_differences.replace_all(msg_sanitized, "#some differences");
-                let msg_sanitized = &re_success_some.replace_all(msg_sanitized, "success #some");
-                let msg_sanitized =
-                    &re_some_processed.replace_all(msg_sanitized, "#some processed");
-                let msg_sanitized = &re_account_some.replace_all(msg_sanitized, "#some-account");
-                let msg_sanitized = &re_ledger_some.replace_all(msg_sanitized, "Ledger #some");
-                let msg_sanitized =
-                    &re_done_complete.replace_all(msg_sanitized, "complete #some-num");
-                // replace ledger close times
-                let msg_sanitized =
-                    &re_ledger_close_time.replace_all(msg_sanitized, "#some-ledger-close-time");
-                let msg_sanitized = &re_fetch_pack.replace_all(msg_sanitized, "pack for #some-obj");
-                let msg_sanitized = &re_num_out_of.replace_all(msg_sanitized, "#some out of #some");
-                let msg_sanitized = &re_books_found.replace_all(msg_sanitized, "#some books found");
-                let msg_sanitized = &re_timeouts_some.replace_all(msg_sanitized, "timeouts:#some");
-                let msg_sanitized =
-                    &re_status_other_than.replace_all(msg_sanitized, "Status other than #some");
-                let msg_sanitized = &re_thresh_some.replace_all(msg_sanitized, "Thresh:#some");
-                let msg_sanitized = &re_save_for.replace_all(msg_sanitized, "pack for #some");
-                let msg_sanitized = &re_ledger_obj.replace_all(msg_sanitized, "{truncated}");
-                let msg_sanitized =
-                    &re_some_failed_and_some.replace_all(msg_sanitized, "#some failed and #some");
-                let msg_sanitized =
-                    &re_node_count_some.replace_all(msg_sanitized, "Node count (#some)");
-
-                let msg_sanitized = msg_sanitized.to_string();
+                let msg_sanitized = sanitize_message(msg);
 
                 // if this is a new log
                 if !log_id_map.contains_key(&msg_sanitized) {
@@ -763,4 +528,230 @@ fn match_line(origin: Match, level: Match) -> bool {
     };
 
     return res;
+}
+
+fn sanitize_message(msg: &str) -> String {
+    lazy_static! {
+        static ref RE_BASE_16: Regex = Regex::new(r"[0-9A-F]{64}").unwrap();
+        static ref RE_ALPHA_NUM_ID: Regex = Regex::new(r"[A-Za-z0-9]{52}").unwrap();
+        static ref RE_IP: Regex = Regex::new(r"(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?").unwrap();
+        static ref RE_HASH_NUM: Regex = Regex::new(r"#\d+").unwrap();
+        static ref RE_LEDGER_CLOSE_TIME: Regex = Regex::new(r"(?:[^\d])\d{9}(?:[^\d]|$)").unwrap();
+        static ref RE_WEIGHT: Regex = Regex::new(r"weight -?\d{1,2}").unwrap();
+        static ref RE_PERCENT: Regex = Regex::new(r"percent \d{1,3}").unwrap();
+        static ref RE_VOTES: Regex = Regex::new(r"\d{1,3} time votes").unwrap();
+        static ref RE_PARTICIPANTS: Regex = Regex::new(r"\d{1,3} participants").unwrap();
+        static ref RE_LEDGER_ID: Regex = Regex::new(r": \d+ <=").unwrap();
+        static ref RE_LEDGER_ID_TRAIL: Regex = Regex::new(r"<= \d+").unwrap();
+        static ref RE_ADVANCE_LEDGER_ID: Regex = Regex::new(r"\d+ with >= \d+").unwrap();
+        static ref RE_LEDGER_JSON_LOG: Regex = Regex::new(r"\{.+close_time_human.+\}").unwrap();
+        static ref RE_PROPOSERS: Regex = Regex::new(r"Proposers:\d{1,3}").unwrap();
+        static ref RE_THRESH_WEIGHT: Regex = Regex::new(r"nw:\d{1,3}").unwrap();
+        static ref RE_THRESH_VOTE: Regex = Regex::new(r"thrV:\d{1,3}").unwrap();
+        static ref RE_THRESH_CONSENSUS: Regex = Regex::new(r"thrC:\d{1,3}").unwrap();
+        static ref RE_OFFSET_ESTIMATE: Regex =
+            Regex::new(r"is estimated at -?\d \(\d{1,3}\)").unwrap();
+        static ref RE_NUM_NODES: Regex = Regex::new(r"\d+ nodes").unwrap();
+        static ref RE_BRACKETS_NUM: Regex = Regex::new(r"\[\d+\]").unwrap();
+        static ref RE_SEQ_NUM: Regex = Regex::new(r"seq=\d+").unwrap();
+        static ref RE_LEDGER_TIMEOUTS: Regex = Regex::new(r"\d+ timeouts for ledger \d+").unwrap();
+        static ref RE_MISSING_NODE: Regex = Regex::new(r"Missing node in \d+").unwrap();
+        static ref RE_SOME_TASKS: Regex = Regex::new(r"\d+ tasks").unwrap();
+        static ref RE_SOME_JOBS: Regex = Regex::new(r"\d+ jobs").unwrap();
+        static ref RE_SOME_ITEMS: Regex = Regex::new(r"\d+ items").unwrap();
+        static ref RE_SOME_OF_SOME: Regex = Regex::new(r"\d+  of \d+ listed").unwrap();
+        static ref RE_SOME_OF: Regex = Regex::new(r"\d+ of").unwrap();
+        static ref RE_OF_SOME_FOR: Regex = Regex::new(r"of \d+ for").unwrap();
+        static ref RE_SOME_SOME_ID: Regex = Regex::new(r"\d+:#some-id").unwrap();
+        static ref RE_SOME_TRUSTED: Regex = Regex::new(r"\d+ trusted").unwrap();
+        static ref RE_SOME_ADDED: Regex = Regex::new(r"\d+ added").unwrap();
+        static ref RE_SOME_REMOVED: Regex = Regex::new(r"\d+ removed").unwrap();
+        static ref RE_SOME_GOOD_NUM: Regex = Regex::new(r"good:\d+").unwrap();
+        static ref RE_SOME_DUPE_NUM: Regex = Regex::new(r"dupe:\d+").unwrap();
+        static ref RE_SOME_SRC: Regex = Regex::new(r"src=\d+").unwrap();
+        static ref RE_SOME_FROM: Regex = Regex::new(r"from \d+").unwrap();
+        static ref RE_SOME_N: Regex = Regex::new(r"n=\d+").unwrap();
+        static ref RE_SOME_PEER: Regex = Regex::new(r"Peer [0-9A-F]+ votes").unwrap();
+        static ref RE_SOME_PEER_NOW: Regex = Regex::new(r"Peer [0-9A-F]+ now").unwrap();
+        static ref RE_SOME_PEER_HAS: Regex = Regex::new(r"[0-9A-F]+ has").unwrap();
+        static ref RE_SOME_PEER_VOTES: Regex = Regex::new(r"votes \w+ on").unwrap();
+        static ref RE_SOME_TRANSACTIONS: Regex = Regex::new(r"\d+ transactions?").unwrap();
+        static ref RE_SOME_CHANGES: Regex = Regex::new(r"\d+ changes").unwrap();
+        static ref RE_SOME_AND: Regex = Regex::new(r"\d+ and").unwrap();
+        static ref RE_SOME_BEGINS: Regex = Regex::new(r"\d+ begins").unwrap();
+        static ref RE_SOME_COMPLETED: Regex = Regex::new(r"\d+ completed").unwrap();
+        static ref RE_SOME_ACCOUNTS: Regex = Regex::new(r"\d+ accounts?").unwrap();
+        static ref RE_IS_SOME_NL: Regex = Regex::new(r"is \d+$").unwrap();
+        static ref RE_TO_SOME_NL: Regex = Regex::new(r"to \d+$").unwrap();
+        static ref RE_HASH_COLON_SOME: Regex = Regex::new(r"#some-base-16-hash:\d+").unwrap();
+        static ref RE_SOME_BRANCH_SUPPORT_OBJECT: Regex =
+            Regex::new(r"\{.+branchSupport.+}").unwrap();
+        static ref RE_AGREE_DISAGREE: Regex = Regex::new(r"agree=\d+, disagree=\d+$").unwrap();
+        static ref RE_SOME_CONSENSUS_DBG: Regex =
+            Regex::new(r"\(working seq.+quorum: \d+\)").unwrap();
+        static ref RE_REPORT_SOME_PROP: Regex = Regex::new(r"Prop=.+fail=[a-z]{2,3}$").unwrap();
+        static ref RE_PROGRESS_SOME: Regex = Regex::new(r"progress\(\d+\)").unwrap();
+        static ref RE_TIMEOUT_SOME: Regex = Regex::new(r"Timeout\(\d+\) pc=\d+ acquiring").unwrap();
+        static ref RE_HELD_SOME: Regex = Regex::new(r"held: -*\d+$").unwrap();
+        static ref RE_BALANCE_SOME: Regex = Regex::new(r"Balance: \d+(\.\d+)?/[A-Z]{3}$").unwrap();
+        static ref RE_OFFER_OUT: Regex =
+            Regex::new(r"Offer out: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$")
+                .unwrap();
+        static ref RE_OFFER_IN_SOME_ISSUER: Regex =
+            Regex::new(r"Offer in: \d+(\.\d+)?/[A-Z]{3}( \(issuer: r[A-Za-z0-9]{24,34}\))?$")
+                .unwrap();
+        static ref RE_CROSSING_AS_SOME: Regex =
+            Regex::new(r"Crossing as: r[A-Za-z0-9]{25,35}$").unwrap();
+        static ref RE_ATTEMPTING_CROSS_ONE: Regex =
+            Regex::new(r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> [A-Z]{3}$").unwrap();
+        static ref RE_ATTEMPTING_CROSS_TWO: Regex =
+            Regex::new(r"Attempting cross: [A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$").unwrap();
+        static ref RE_ATTEMPTING_CROSS_DOUBLE: Regex = Regex::new(
+            r"Attempting cross: r[A-Za-z0-9]{24,34}/[A-Z]{3} -> r[A-Za-z0-9]{24,34}/[A-Z]{3}$",
+        )
+        .unwrap();
+        static ref RE_FINAL_RESULT: Regex = Regex::new(r"final result: [a-z]+$").unwrap();
+        static ref RE_ORDER_SOME_VALUE: Regex = Regex::new(r"order \d+$").unwrap();
+        static ref RE_HAS_SOME_SOME_REQUIRED: Regex =
+            Regex::new(r"has \d+, \d+ required$").unwrap();
+        static ref RE_SEQ_SOME: Regex = Regex::new(r"seq \d+:?").unwrap();
+        static ref RE_SOME_NAYS_OBJECT: Regex = Regex::new(r"\{.+nays.+}").unwrap();
+        static ref RE_SOME_DIFFERENCES: Regex = Regex::new(r"\d+ differences").unwrap();
+        static ref RE_SUCCESS_SOME: Regex = Regex::new(r"success \d+").unwrap();
+        static ref RE_SOME_PROCESSED: Regex = Regex::new(r"\d+ processed").unwrap();
+        static ref RE_LEDGER_SOME: Regex = Regex::new(r"Ledger \d+").unwrap();
+        static ref RE_ACCOUNT_SOME: Regex = Regex::new(r"r[a-zA-Z0-9]{25,35}").unwrap();
+        static ref RE_DONE_COMPLETE: Regex = Regex::new(r"complete \d+").unwrap();
+        static ref RE_FETCH_PACK: Regex = Regex::new(r"pack for \d+").unwrap();
+        static ref RE_NUM_OUT_OF: Regex = Regex::new(r"\d+ out of \d+").unwrap();
+        static ref RE_BOOKS_FOUND: Regex = Regex::new(r"\d+ books found").unwrap();
+        static ref RE_TIMEOUTS_SOME: Regex = Regex::new(r"timeouts:\d+").unwrap();
+        static ref RE_STATUS_OTHER_THAN: Regex = Regex::new(r"Status other than -?\d+").unwrap();
+        static ref RE_THRESH_SOME: Regex = Regex::new(r"Thresh:\d+").unwrap();
+        static ref RE_SAVE_FOR: Regex = Regex::new(r"save for \d+").unwrap();
+        static ref RE_LEDGER_OBJ: Regex = Regex::new(r"\{.+acquired.+}").unwrap();
+        static ref RE_SOME_FAILED_AND_SOME: Regex = Regex::new(r"\d+ failed and \d+").unwrap();
+        static ref RE_NODE_COUNT_SOME: Regex = Regex::new(r"Node count \(\d+\)").unwrap();
+    }
+
+    // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
+    let msg_sanitized = &RE_BASE_16.replace_all(msg, "#some-base-16-hash");
+    // replace alpha numerical ids of length 52 (e.g.: nHBe4vqSAzjpPRLKwSFzRFtmvzXaf5wPPmuVrQCAoJoS1zskgDA4)
+    let msg_sanitized = &RE_ALPHA_NUM_ID.replace_all(msg_sanitized, "#some-id");
+    // replace ip addresses
+    let msg_sanitized = &RE_IP.replace_all(msg_sanitized, "#some-ip");
+    // replace numbers with '#' prefix (e.g.: #5334)
+    let msg_sanitized = &RE_HASH_NUM.replace_all(msg_sanitized, "#some-num");
+    let msg_sanitized = &RE_SOME_PEER.replace_all(msg_sanitized, "Peer #some-peer-node votes");
+    let msg_sanitized = &RE_SOME_PEER_NOW.replace_all(msg_sanitized, "Peer #some-peer-node now");
+    let msg_sanitized = &RE_SOME_PEER_HAS.replace_all(msg_sanitized, "#some-peer-node has");
+    let msg_sanitized = &RE_SOME_PEER_VOTES.replace_all(msg_sanitized, "votes #some-vote on");
+    let msg_sanitized = &RE_WEIGHT.replace_all(msg_sanitized, "#some-weight");
+    let msg_sanitized = &RE_PERCENT.replace_all(msg_sanitized, "#some-percent");
+    let msg_sanitized = &RE_VOTES.replace_all(msg_sanitized, "#some-votes time votes");
+    let msg_sanitized = &RE_PARTICIPANTS.replace_all(msg_sanitized, "#some-participants");
+    let msg_sanitized = &RE_LEDGER_ID.replace_all(msg_sanitized, ": #some-ledger-id <=");
+    let msg_sanitized = &RE_LEDGER_ID_TRAIL.replace_all(msg_sanitized, "<= #some-ledger-id");
+    let msg_sanitized =
+        &RE_ADVANCE_LEDGER_ID.replace_all(msg_sanitized, "#some-ledger-id >= #validations");
+    let msg_sanitized = &RE_LEDGER_JSON_LOG.replace_all(msg_sanitized, "LEDGER_STATUS_JSON_LOG");
+    let msg_sanitized = &RE_PROPOSERS.replace_all(msg_sanitized, "Proposers:#some-proposers");
+    let msg_sanitized = &RE_THRESH_WEIGHT.replace_all(msg_sanitized, "#some-needweight");
+    let msg_sanitized = &RE_THRESH_VOTE.replace_all(msg_sanitized, "#some-thresh-vote");
+    let msg_sanitized = &RE_THRESH_CONSENSUS.replace_all(msg_sanitized, "#some-thresh-consensus");
+    let msg_sanitized = &RE_OFFSET_ESTIMATE.replace_all(
+        msg_sanitized,
+        "is estimated at #some-offset (#some-closecount)",
+    );
+    let msg_sanitized = &RE_NUM_NODES.replace_all(msg_sanitized, "#num nodes");
+    let msg_sanitized = &RE_BRACKETS_NUM.replace_all(msg_sanitized, "");
+    let msg_sanitized = &RE_SEQ_NUM.replace_all(msg_sanitized, "seq=#");
+    let msg_sanitized =
+        &RE_LEDGER_TIMEOUTS.replace_all(msg_sanitized, "# timeouts for ledger #some-ledger-id");
+    let msg_sanitized =
+        &RE_MISSING_NODE.replace_all(msg_sanitized, "Missing node in #some-ledger-id");
+    let msg_sanitized = &RE_SOME_TASKS.replace_all(msg_sanitized, "#some-tasks tasks");
+    let msg_sanitized = &RE_SOME_JOBS.replace_all(msg_sanitized, "#some-jobs jobs");
+    let msg_sanitized = &RE_SOME_ITEMS.replace_all(msg_sanitized, "#some-items items");
+    let msg_sanitized = &RE_SOME_OF_SOME.replace_all(msg_sanitized, "#some of #some listed");
+    let msg_sanitized = &RE_SOME_OF.replace_all(msg_sanitized, "#some of");
+    let msg_sanitized = &RE_OF_SOME_FOR.replace_all(msg_sanitized, "of #some for");
+    let msg_sanitized = &RE_SOME_SOME_ID.replace_all(msg_sanitized, "#some:#some-id");
+    let msg_sanitized = &RE_SOME_TRUSTED.replace_all(msg_sanitized, "#some trusted");
+    let msg_sanitized = &RE_SOME_ADDED.replace_all(msg_sanitized, "#some added");
+    let msg_sanitized = &RE_SOME_REMOVED.replace_all(msg_sanitized, "#some removed");
+    let msg_sanitized = &RE_SOME_GOOD_NUM.replace_all(msg_sanitized, "good:#some-good-num");
+    let msg_sanitized = &RE_SOME_DUPE_NUM.replace_all(msg_sanitized, "dupe:#some-dupe-num");
+    let msg_sanitized = &RE_SOME_SRC.replace_all(msg_sanitized, "src=#some-src-num");
+    let msg_sanitized = &RE_SOME_FROM.replace_all(msg_sanitized, "from #some_number");
+    let msg_sanitized = &RE_SOME_N.replace_all(msg_sanitized, "n=#some-num");
+    let msg_sanitized = &RE_SOME_TRANSACTIONS.replace_all(msg_sanitized, "#some transactions");
+    let msg_sanitized = &RE_SOME_CHANGES.replace_all(msg_sanitized, "#some changes");
+    let msg_sanitized = &RE_SOME_AND.replace_all(msg_sanitized, "#some and");
+    let msg_sanitized = &RE_SOME_BEGINS.replace_all(msg_sanitized, "#some begins");
+    let msg_sanitized = &RE_SOME_COMPLETED.replace_all(msg_sanitized, "#some completed");
+    let msg_sanitized = &RE_SOME_ACCOUNTS.replace_all(msg_sanitized, "#some accounts");
+    let msg_sanitized = &RE_IS_SOME_NL.replace_all(msg_sanitized, "is #some");
+    let msg_sanitized = &RE_TO_SOME_NL.replace_all(msg_sanitized, "to #some");
+    let msg_sanitized = &RE_HASH_COLON_SOME.replace_all(msg_sanitized, "#some-base-16-hash:#some");
+    let msg_sanitized =
+        &RE_SOME_BRANCH_SUPPORT_OBJECT.replace_all(msg_sanitized, "#some-branch-support-object");
+    let msg_sanitized =
+        &RE_AGREE_DISAGREE.replace_all(msg_sanitized, "agree=#some, disagree=#some");
+    let msg_sanitized = &RE_SOME_CONSENSUS_DBG.replace_all(msg_sanitized, "(#truncated)");
+    let msg_sanitized = &RE_REPORT_SOME_PROP.replace_all(
+        msg_sanitized,
+        "Prop=#some val=#some corLCL=#some fail=#some",
+    );
+    let msg_sanitized = &RE_PROGRESS_SOME.replace_all(msg_sanitized, "progress(#some)");
+    let msg_sanitized =
+        &RE_TIMEOUT_SOME.replace_all(msg_sanitized, "Timeout(#some) pc=#some acquiring");
+    let msg_sanitized = &RE_HELD_SOME.replace_all(msg_sanitized, "held: #some");
+    let msg_sanitized =
+        &RE_BALANCE_SOME.replace_all(msg_sanitized, "Balance: #some-value/#currency");
+    let msg_sanitized =
+        &RE_OFFER_OUT.replace_all(msg_sanitized, "Offer out: #some-value/#currency");
+    let msg_sanitized =
+        &RE_OFFER_IN_SOME_ISSUER.replace_all(msg_sanitized, "Offer in: #some-value/#currency");
+    let msg_sanitized = &RE_CROSSING_AS_SOME.replace_all(msg_sanitized, "Crossing as: #some-id");
+    let msg_sanitized = &RE_ATTEMPTING_CROSS_ONE.replace_all(
+        msg_sanitized,
+        "Attempting cross: #some-account/#currency -> #currency",
+    );
+    let msg_sanitized = &RE_ATTEMPTING_CROSS_TWO.replace_all(
+        msg_sanitized,
+        "Attempting cross: #currency -> #some-account/#currency",
+    );
+    let msg_sanitized = &RE_ATTEMPTING_CROSS_DOUBLE.replace_all(
+        msg_sanitized,
+        "Attempting cross: #some-account/#currency -> #some-account/#currency",
+    );
+    // let msg_sanitized =
+    //     &RE_FINAL_RESULT.replace_all(msg_sanitized, "final result: #some");
+    let msg_sanitized = &RE_ORDER_SOME_VALUE.replace_all(msg_sanitized, "order #some-value");
+    let msg_sanitized =
+        &RE_HAS_SOME_SOME_REQUIRED.replace_all(msg_sanitized, "has #some, #some required");
+    let msg_sanitized = &RE_SEQ_SOME.replace_all(msg_sanitized, "seq #some:");
+    let msg_sanitized = &RE_SOME_NAYS_OBJECT.replace_all(msg_sanitized, "{truncated}");
+    let msg_sanitized = &RE_SOME_DIFFERENCES.replace_all(msg_sanitized, "#some differences");
+    let msg_sanitized = &RE_SUCCESS_SOME.replace_all(msg_sanitized, "success #some");
+    let msg_sanitized = &RE_SOME_PROCESSED.replace_all(msg_sanitized, "#some processed");
+    let msg_sanitized = &RE_ACCOUNT_SOME.replace_all(msg_sanitized, "#some-account");
+    let msg_sanitized = &RE_LEDGER_SOME.replace_all(msg_sanitized, "Ledger #some");
+    let msg_sanitized = &RE_DONE_COMPLETE.replace_all(msg_sanitized, "complete #some-num");
+    // replace ledger close times
+    let msg_sanitized = &RE_LEDGER_CLOSE_TIME.replace_all(msg_sanitized, "#some-ledger-close-time");
+    let msg_sanitized = &RE_FETCH_PACK.replace_all(msg_sanitized, "pack for #some-obj");
+    let msg_sanitized = &RE_NUM_OUT_OF.replace_all(msg_sanitized, "#some out of #some");
+    let msg_sanitized = &RE_BOOKS_FOUND.replace_all(msg_sanitized, "#some books found");
+    let msg_sanitized = &RE_TIMEOUTS_SOME.replace_all(msg_sanitized, "timeouts:#some");
+    let msg_sanitized = &RE_STATUS_OTHER_THAN.replace_all(msg_sanitized, "Status other than #some");
+    let msg_sanitized = &RE_THRESH_SOME.replace_all(msg_sanitized, "Thresh:#some");
+    let msg_sanitized = &RE_SAVE_FOR.replace_all(msg_sanitized, "pack for #some");
+    let msg_sanitized = &RE_LEDGER_OBJ.replace_all(msg_sanitized, "{truncated}");
+    let msg_sanitized =
+        &RE_SOME_FAILED_AND_SOME.replace_all(msg_sanitized, "#some failed and #some");
+    let msg_sanitized = &RE_NODE_COUNT_SOME.replace_all(msg_sanitized, "Node count (#some)");
+
+    return msg_sanitized.to_string();
 }
