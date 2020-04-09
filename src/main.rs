@@ -18,7 +18,8 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static STOP_ROUNDS: i32 = 30;
+static ROUNDS_PER_BATCH: i32 = 30;
+static AMOUNT_BATCHES: i32 = 5;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
 
@@ -30,7 +31,7 @@ fn main() {
 }
 
 fn try_main() -> Result<(), Box<dyn std::error::Error>> {
-    let bar = ProgressBar::new(STOP_ROUNDS.try_into().unwrap());
+    let bar = ProgressBar::new((ROUNDS_PER_BATCH * AMOUNT_BATCHES).try_into().unwrap());
     let args = env::args().collect::<Vec<String>>();
     if args.len() < 2 {
         return Err(Box::<dyn std::error::Error + Send + Sync>::from(
@@ -45,10 +46,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let buf_reader = BufReader::new(file);
     let mut contents = buf_reader.lines();
 
-    // let stdout = io::stdout();
-    // let stdout = stdout.lock();
-    // let mut buf_writer = BufWriter::new(stdout);
-
     let mut rounds = 0;
 
     // Count distinct logs
@@ -59,10 +56,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mut log_list = Vec::<String>::new();
     let mut log_counts = Vec::<u64>::new();
 
-    // Regex matching entire line, 2 matching groups, omitting date+time, separated on semicolon
-    // let re = Regex::new(r"\d{4}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Oct|Sep|Nov|Dec)-\d{2}\s\d{2}:\d{2}:\d{2}\.\d{9}\s(\w+):(.+)").unwrap();
-
-    // Shorter regex separating on spaces in the log line, first match is the entire line, 1 is the message, 2 is the origin, 3 is the level
+    // Regex separating on spaces in the log line, first match is the entire line, 1 is the message, 2 is the origin, 3 is the level
     let re = Regex::new(r".{11}\s.{18}\s((\w+):(\w+)\s.+)").unwrap();
 
     let mut started = false;
@@ -77,8 +71,21 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
                     rounds += 1;
                     bar.inc(1);
-                    if rounds > STOP_ROUNDS && STOP_ROUNDS != -1 {
-                        break;
+                    if rounds > 0 && rounds % ROUNDS_PER_BATCH == 0 && ROUNDS_PER_BATCH != -1 {
+                        let round_filename = format!(
+                            "{}_rounds_{:03}_{:03}",
+                            filename,
+                            rounds - ROUNDS_PER_BATCH,
+                            rounds - 1
+                        );
+                        all_log_sequence = clean_all_log_sequence(all_log_sequence);
+                        write_files(&round_filename, &all_log_sequence, &log_list)?;
+                        all_log_sequence = Vec::<Vec<u64>>::new();
+                        all_log_sequence.push(Vec::new());
+
+                        if rounds == AMOUNT_BATCHES * ROUNDS_PER_BATCH {
+                            break;
+                        }
                     }
                     all_log_sequence.push(Vec::new());
                     started = true;
@@ -129,8 +136,14 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     // dbg!(all_log_sequence);
     // dbg!(log_list);
 
-    all_log_sequence = clean_all_log_sequence(all_log_sequence);
+    Ok(())
+}
 
+fn write_files(
+    filename: &String,
+    all_log_sequence: &Vec<Vec<u64>>,
+    log_list: &Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let parsed_filename = filename.to_owned() + ".parsed";
     let parsed_file = File::create(parsed_filename)?;
     let mut parsed_file = BufWriter::new(parsed_file);
@@ -165,9 +178,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
     let mapping_filename = filename.to_owned() + ".mapping";
     let mapping_file = File::create(mapping_filename)?;
 
-    write_mapping(mapping_file, log_list)?;
-
-    Ok(())
+    return write_mapping(mapping_file, log_list);
 }
 
 fn clean_all_log_sequence(all_log_sequence: Vec<Vec<u64>>) -> Vec<Vec<u64>> {
@@ -197,7 +208,7 @@ fn clean_all_log_sequence(all_log_sequence: Vec<Vec<u64>>) -> Vec<Vec<u64>> {
     return new_all_log_sequence;
 }
 
-fn write_mapping(out_file: File, log_list: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+fn write_mapping(out_file: File, log_list: &Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     let mut out_file = BufWriter::new(out_file);
 
     for (id, log) in log_list.iter().enumerate() {
