@@ -468,49 +468,40 @@ fn map_log(log: &String) -> &str {
 }
 
 fn match_line(origin: Match, level: Match) -> bool {
-    let is_debug = match level.as_str() {
-        "DBG" => true,
-        _unknown => false,
-    };
-    if !is_debug {
-        return false;
-    }
-
-    // Match on all log categories
-    let res = match origin.as_str() {
-        "NetworkOPs" => true,
-        "LedgerConsensus" => true,
-        "LedgerMaster" => true,
-        "Protocol" => true,
-        "Peer" => false,
-        "Application" => false,
-        "LoadManager" => true,
-        "LoadMonitor" => false,
-        "PeerFinder" => false,
-        "ManifestCache" => false,
-        "Server" => false,
-        "Validations" => true,
-        "Resource" => false,
-        "Ledger" => true,
-        "JobQueue" => true,
-        "NodeStore" => true,
-        "TaggedCache" => true,
-        "Amendments" => true,
-        "OrderBookDB" => true,
-        "ValidatorList" => true,
-        "ValidatorSite" => false,
-        "Flow" => false,
-        "TimeKeeper" => true,
-        "InboundLedger" => true,
-        "TransactionAcquire" => true,
-        "LedgerHistory" => true,
-        "OpenLedger" => false,
-        "PathRequest" => true,
-        "TxQ" => true,
-        "Resolver" => true,
-        "Overlay" => true,
-        "LedgerCleaner" => true,
-        unknown => {
+    let res = match (origin.as_str(), level.as_str()) {
+        ("NetworkOPs", _) => true,
+        ("LedgerConsensus", _) => true,
+        ("LedgerMaster", _) => true,
+        ("Protocol", _) => true,
+        ("Peer", _) => false,
+        ("Application", _) => false,
+        ("LoadManager", _) => false,
+        ("LoadMonitor", _) => false,
+        ("PeerFinder", _) => false,
+        ("ManifestCache", _) => false,
+        ("Server", _) => false,
+        ("Validations", _) => true,
+        ("Resource", _) => false,
+        ("Ledger", _) => true,
+        ("JobQueue", _) => true,
+        ("NodeStore", _) => true,
+        ("TaggedCache", _) => true,
+        ("Amendments", _) => true,
+        ("OrderBookDB", _) => true,
+        ("ValidatorList", _) => true,
+        ("ValidatorSite", _) => false,
+        ("Flow", _) => false,
+        ("TimeKeeper", _) => true,
+        ("InboundLedger", _) => true,
+        ("TransactionAcquire", _) => true,
+        ("LedgerHistory", _) => true,
+        ("OpenLedger", _) => false,
+        ("PathRequest", _) => true,
+        ("TxQ", _) => true,
+        ("Resolver", _) => false,
+        ("Overlay", _) => false,
+        ("LedgerCleaner", _) => false,
+        (unknown, _) => {
             eprintln!("encountered unknown event \"{}\"", unknown);
             "unknown log";
             false
