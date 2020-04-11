@@ -18,8 +18,8 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static ROUNDS_PER_BATCH: i32 = 30;
-static AMOUNT_BATCHES: i32 = 5;
+static ROUNDS_PER_BATCH: i32 = 50;
+static AMOUNT_BATCHES: i32 = 10;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
 
