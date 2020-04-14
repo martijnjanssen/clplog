@@ -439,8 +439,9 @@ fn map_log(log: &String) -> &str {
         "Node on our acquiring TX set is TXN we may not have" => "nodeAcquiringTxMayNotHave",
         "Transaction retry: The source account does not exist." => "txRetrySourceNonExist",
         "Got root TXS node, already have it" => "gotRootTxsHaveIt",
-        "Acquire #some-base-16-hash abort timeouts:1 good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
-        "Acquire #some-base-16-hash abort timeouts:4 good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
+        "Acquire #some-base-16-hash abort timeouts:#some good:#some-good-num dupe:#some-dupe-num" => "acquireAbortTimeout",
+        "Acquire #some-base-16-hash timeouts:#some good:#some-good-num dupe:#some-dupe-num" => "acquireTimeoutGoodDupe",
+        "Acquire #some-base-16-hash timeouts:#some good:#some-good-num" => "acquireTimeoutGood",
         "activated [::ffff:#some-ip]:51235 (#some:#some-id)" => "activatedIp",
         "Consensus triggered check of ledger" => "consensusTriggeredLedgerCheck",
         "Acquire #some-base-16-hash timeouts:3 good:#some-good-num dupe:#some-dupe-num" => "acquireTimeout",
@@ -459,6 +460,15 @@ fn map_log(log: &String) -> &str {
         "Swept #some out of #some inbound ledgers." => "sweptSomeLedgers",
         "Must wait minimum time before closing" => "mustWaitMinBeforeClosing",
         "OrderBookDB::update< #some books found" => "someBooksFound",
+        "Transaction retry: Missing/inapplicable prior transaction." => "txRetryMissingPriorTx",
+        "Transaction retry: Insufficient XRP balance to send." => "txRetryInsufficientBalance",
+        "Transaction retry: A destination tag is required." => "txRetryDestTagRequired",
+        // "Taker     Balance: #amount/#currency" => "olTakerBalance",
+        // "Taker    Offer in: #amount/#currency" => "olTakerOfferIn",
+        // "Taker   Offer out: #amount/#currency (issuer: #some-account)" => "olTakerOfferOut",
+        // // "Taker     Balance: #amount/#currency" => "lcTakerBalance",
+        // "Taker    Offer in: #amount/#currency (issuer: #some-account)" => "lcTakerOfferIn",
+        // "Taker   Offer out: #amount/#currency" => "lcTakerOfferOut",
 
         _ => {
             println!("no mapping for log: {}", log);
@@ -615,6 +625,7 @@ fn sanitize_message(msg: &str) -> String {
         static ref RE_LEDGER_OBJ: Regex = Regex::new(r"\{.+acquired.+}").unwrap();
         static ref RE_SOME_FAILED_AND_SOME: Regex = Regex::new(r"\d+ failed and \d+").unwrap();
         static ref RE_NODE_COUNT_SOME: Regex = Regex::new(r"Node count \(\d+\)").unwrap();
+        static ref RE_AMOUNT_CURRENCY: Regex = Regex::new(r"\d+(\.\d+)?/[A-Z]{3}").unwrap();
     }
 
     // replace base-16 hashes of length 64 (e.g.: 58B57FBEF009EB802DA44B7B35E362DA33648FCD2FE3C3DA235C54EFC8A082A8)
@@ -625,6 +636,8 @@ fn sanitize_message(msg: &str) -> String {
     let msg_sanitized = &RE_IP.replace_all(msg_sanitized, "#some-ip");
     // replace numbers with '#' prefix (e.g.: #5334)
     let msg_sanitized = &RE_HASH_NUM.replace_all(msg_sanitized, "#some-num");
+    // replace amount/currency pairs (e.g.: 36981682439/XRP)
+    let msg_sanitized = &RE_AMOUNT_CURRENCY.replace_all(msg_sanitized, "#amount/#currency");
     let msg_sanitized = &RE_SOME_PEER.replace_all(msg_sanitized, "Peer #some-peer-node votes");
     let msg_sanitized = &RE_SOME_PEER_NOW.replace_all(msg_sanitized, "Peer #some-peer-node now");
     let msg_sanitized = &RE_SOME_PEER_HAS.replace_all(msg_sanitized, "#some-peer-node has");
