@@ -18,7 +18,7 @@ use std::result::Result;
 
 static LOG_ENTERING_CONSENSUS: &str = "LedgerConsensus:NFO Entering consensus process";
 // Stop after number rounds
-static ROUNDS_PER_BATCH: i32 = 50;
+static ROUNDS_PER_BATCH: i32 = 20;
 static AMOUNT_BATCHES: i32 = 10;
 // Process entire file
 // static STOP_ROUNDS: i32 = -1;
@@ -92,6 +92,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 if !match_line(mtch) {
+                    // println!("--- {}", mtch.get(1).unwrap().as_str());
                     continue;
                 }
 
@@ -100,6 +101,9 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 let msg_sanitized = sanitize_message(msg);
+
+                // println!("- {}", msg);
+                // println!("+ {}", msg_sanitized);
 
                 // if this is a new log
                 let mut is_new = false;
