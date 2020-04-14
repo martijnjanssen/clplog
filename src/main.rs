@@ -479,7 +479,9 @@ fn map_log(log_id: &u64, log_list: &std::vec::Vec<std::string::String>, is_new: 
         // "Taker   Offer out: #amount/#currency" => "lcTakerOfferOut",
 
         _ => {
-            println!("no mapping for log: {}", log);
+            if is_new {
+                println!("no mapping for log: {}", log);
+            }
             return String::from("");
         }
     };
