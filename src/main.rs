@@ -69,8 +69,6 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg = mtch.get(1).unwrap().as_str();
 
                 if msg.starts_with(LOG_ENTERING_CONSENSUS) {
-                    rounds += 1;
-                    bar.inc(1);
                     if rounds > 0 && rounds % ROUNDS_PER_BATCH == 0 && ROUNDS_PER_BATCH != -1 {
                         let round_filename = format!(
                             "{}_rounds_{:03}_{:03}",
@@ -89,6 +87,8 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     all_log_sequence.push(Vec::new());
                     started = true;
+                    rounds += 1;
+                    bar.inc(1);
                 }
 
                 if !match_line(mtch.get(2).unwrap(), mtch.get(3).unwrap()) {
