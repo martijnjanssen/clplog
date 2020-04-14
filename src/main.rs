@@ -102,7 +102,9 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                 let msg_sanitized = sanitize_message(msg);
 
                 // if this is a new log
+                let mut is_new = false;
                 if !log_id_map.contains_key(&msg_sanitized) {
+                    is_new = true;
                     let msg_sanitized_clone_1 = msg_sanitized.clone();
                     let msg_sanitized_clone_2 = msg_sanitized.clone();
                     // add it to the map
@@ -117,6 +119,11 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
 
                 // get the log id
                 let log_id = log_id_map.get(&msg_sanitized).unwrap();
+
+                // Skip log if no mapping is defined
+                if map_log(log_id, &log_list, is_new).is_empty() {
+                    continue;
+                }
 
                 // increase the count
                 *(log_counts.get_mut(*log_id as usize).unwrap()) += 1;
@@ -167,7 +174,7 @@ fn write_files(
             // Add the id's to the line
             write!(parsed_file, " {}", log_id)?;
             // Add the labels to the line
-            let log_label = map_log(log_list.get(*log_id as usize).unwrap());
+            let log_label = map_log(log_id, log_list, false);
             write!(labeled_file, " {}", log_label)?;
         }
 
@@ -218,8 +225,9 @@ fn write_mapping(out_file: File, log_list: &Vec<String>) -> Result<(), Box<dyn s
     Ok(())
 }
 
-fn map_log(log: &String) -> &str {
-    match log
+fn map_log(log_id: &u64, log_list: &std::vec::Vec<std::string::String>, is_new: bool) -> String {
+    let log = log_list.get(*log_id as usize).unwrap();
+    let res = match log
         .as_str()
         .get(log.find(" ").unwrap() + 1 as usize..log.len())
         .unwrap()
@@ -472,9 +480,10 @@ fn map_log(log: &String) -> &str {
 
         _ => {
             println!("no mapping for log: {}", log);
-            "unknownLog"
+            return String::from("");
         }
-    }
+    };
+    return String::from(res);
 }
 
 fn match_line(mtch: Captures) -> bool {
