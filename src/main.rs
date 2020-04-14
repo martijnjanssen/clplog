@@ -3,7 +3,7 @@
 extern crate lazy_static;
 
 use indicatif::ProgressBar;
-use regex::Match;
+use regex::Captures;
 use regex::Regex;
 use std::boxed::Box;
 use std::collections::HashMap;
@@ -91,7 +91,7 @@ fn try_main() -> Result<(), Box<dyn std::error::Error>> {
                     bar.inc(1);
                 }
 
-                if !match_line(mtch.get(2).unwrap(), mtch.get(3).unwrap()) {
+                if !match_line(mtch) {
                     continue;
                 }
 
@@ -467,7 +467,9 @@ fn map_log(log: &String) -> &str {
     }
 }
 
-fn match_line(origin: Match, level: Match) -> bool {
+fn match_line(mtch: Captures) -> bool {
+    let origin = mtch.get(2).unwrap();
+    let level = mtch.get(3).unwrap();
     let res = match (origin.as_str(), level.as_str()) {
         ("NetworkOPs", _) => true,
         ("LedgerConsensus", _) => true,
