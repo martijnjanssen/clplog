@@ -247,20 +247,20 @@ fn map_log(log_id: &u64, log_list: &std::vec::Vec<std::string::String>, is_new: 
         }
         "View of consensus changed during establish status=establish,  mode=proposing" => "viewChangeEstablishProposing",
 
-        "Consensus mode change before=observing, after=switchedLedger" => {
-            "modeObservingToSwitchedLedger"
-        }
-        "Consensus mode change before=switchedLedger, after=proposing" => {
-            "modeSwitchedLedgerToProposing"
-        }
-        "Consensus mode change before=proposing, after=observing" => "modeProposingToObserving",
-        "Consensus mode change before=observing, after=wrongLedger" => "modeObservingToWrongLedger",
-        "Consensus mode change before=observing, after=observing" => "modeObservingToObserving",
-        "Consensus mode change before=wrongLedger, after=proposing" => "modeWrongledgerToProposing",
-        "Consensus mode change before=proposing, after=proposing" => "modeProposingToProposing",
-        "Consensus mode change before=wrongLedger, after=wrongLedger" => {
-            "modeWrongledgerToWrongledger"
-        }
+        // "Consensus mode change before=observing, after=switchedLedger" => {
+        //     "modeObservingToSwitchedLedger"
+        // }
+        // "Consensus mode change before=switchedLedger, after=proposing" => {
+        //     "modeSwitchedLedgerToProposing"
+        // }
+        // "Consensus mode change before=proposing, after=observing" => "modeProposingToObserving",
+        // "Consensus mode change before=observing, after=wrongLedger" => "modeObservingToWrongLedger",
+        // "Consensus mode change before=observing, after=observing" => "modeObservingToObserving",
+        // "Consensus mode change before=wrongLedger, after=proposing" => "modeWrongledgerToProposing",
+        // "Consensus mode change before=proposing, after=proposing" => "modeProposingToProposing",
+        // "Consensus mode change before=wrongLedger, after=wrongLedger" => {
+        //     "modeWrongledgerToWrongledger"
+        // }
 
         "Converge cutoff (#some-participants)" => "convergeCutoff",
         "CNF buildLCL #some-base-16-hash" => "buildLCL",
@@ -273,12 +273,12 @@ fn map_log(log_id: &u64, log_list: &std::vec::Vec<std::string::String>, is_new: 
         "#some-base-16-hash to #some-base-16-hash" => "hashTohash",
         "Entering consensus process, validating, synced=yes" => "enterConsensus",
         "CNF Val #some-base-16-hash" => "cnfSomething",
-        "Proposers:#some-proposers #some-needweight #some-thresh-vote #some-thresh-consensus" => {
-            "proposersWeightThresholdLog"
-        }
-        "No change (NO) : #some-weight, #some-percent" => "noChangeNo",
-        "No change (YES) : #some-weight, #some-percent" => "noChangeYes",
-        "Position change: CTime#some-ledger-close-time tx #some-base-16-hash" => "positionChange",
+        // "Proposers:#some-proposers #some-needweight #some-thresh-vote #some-thresh-consensus" => {
+        //     "proposersWeightThresholdLog"
+        // }
+        // "No change (NO) : #some-weight, #some-percent" => "noChangeNo",
+        // "No change (YES) : #some-weight, #some-percent" => "noChangeYes",
+        // "Position change: CTime#some-ledger-close-time tx #some-base-16-hash" => "positionChange",
         "#some-votes time votes for#some-ledger-close-time" => "votesForClosetime",
         "By the time we got #some-base-16-hash no peers were proposing it" => "noPeersHashPropose",
         "Consensus built old ledger: #some-ledger-id <= #some-ledger-id" => "buildOldLedger",
@@ -496,10 +496,11 @@ fn match_line(mtch: Captures) -> bool {
     let origin = mtch.get(2).unwrap();
     let level = mtch.get(3).unwrap();
     let res = match (origin.as_str(), level.as_str()) {
-        ("NetworkOPs", _) => true,
-        ("LedgerConsensus", _) => true,
-        ("LedgerMaster", _) => true,
-        ("Protocol", _) => true,
+        ("LedgerConsensus", "DBG") => true,
+        ("LedgerConsensus", _) => false,
+        ("NetworkOPs", _) => false,
+        ("LedgerMaster", _) => false,
+        ("Protocol", _) => false,
         ("Peer", _) => false,
         ("Application", _) => false,
         ("LoadManager", _) => false,
@@ -507,24 +508,24 @@ fn match_line(mtch: Captures) -> bool {
         ("PeerFinder", _) => false,
         ("ManifestCache", _) => false,
         ("Server", _) => false,
-        ("Validations", _) => true,
+        ("Validations", _) => false,
         ("Resource", _) => false,
-        ("Ledger", _) => true,
-        ("JobQueue", _) => true,
-        ("NodeStore", _) => true,
-        ("TaggedCache", _) => true,
-        ("Amendments", _) => true,
-        ("OrderBookDB", _) => true,
-        ("ValidatorList", _) => true,
+        ("Ledger", _) => false,
+        ("JobQueue", _) => false,
+        ("NodeStore", _) => false,
+        ("TaggedCache", _) => false,
+        ("Amendments", _) => false,
+        ("OrderBookDB", _) => false,
+        ("ValidatorList", _) => false,
         ("ValidatorSite", _) => false,
         ("Flow", _) => false,
-        ("TimeKeeper", _) => true,
-        ("InboundLedger", _) => true,
-        ("TransactionAcquire", _) => true,
-        ("LedgerHistory", _) => true,
+        ("TimeKeeper", _) => false,
+        ("InboundLedger", _) => false,
+        ("TransactionAcquire", _) => false,
+        ("LedgerHistory", _) => false,
         ("OpenLedger", _) => false,
-        ("PathRequest", _) => true,
-        ("TxQ", _) => true,
+        ("PathRequest", _) => false,
+        ("TxQ", _) => false,
         ("Resolver", _) => false,
         ("Overlay", _) => false,
         ("LedgerCleaner", _) => false,
